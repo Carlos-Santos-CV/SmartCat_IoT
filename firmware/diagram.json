@@ -26,6 +26,8 @@
     }
   ],
   "connections": [
+    [ "esp:TX", "$serialMonitor:RX", "", [] ],
+    [ "esp:RX", "$serialMonitor:TX", "", [] ],
     [ "esp:GND.1", "rfid2:GND", "black", [] ],
     [ "esp:3V3.1", "rfid2:3V3", "red", [] ],
     [ "esp:4", "rfid2:RST", "gray", [] ],
