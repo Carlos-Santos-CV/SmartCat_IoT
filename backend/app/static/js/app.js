@@ -159,36 +159,51 @@ window.deletarEstacao = async (id, nome) => {
 };
 
 // ======================================================
-// 🥩 HISTÓRICO DE REFEIÇÕES
+// 🥩 ATIVIDADE RECENTE (Refeições + Caixa de Areia)
 // ======================================================
 
-async function carregarRefeicoes() {
-  const container = document.getElementById('lista-refeicoes');
+async function carregarEventos() {
+  const container = document.getElementById('lista-eventos');
   if (!container) return;
 
   try {
-    const response = await fetch('/api/refeicoes');
-    const refeicoes = await response.json();
+    const response = await fetch('/api/eventos');
+    const eventos = await response.json();
 
-    if (!refeicoes || refeicoes.length === 0) {
-      container.innerHTML = '<li class="feed-item"><span class="feed-time">Nenhuma refeição registrada.</span></li>';
+    if (!eventos || eventos.length === 0) {
+      container.innerHTML = '<li class="feed-item"><span class="feed-time">Nenhuma atividade registrada.</span></li>';
       return;
     }
 
-    container.innerHTML = refeicoes.map(ref => {
-      const dataHora = new Date(ref.created_at).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+    container.innerHTML = eventos.map(ev => {
+      const dataHora = new Date(ev.created_at).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+
+      if (ev.tipo === 'REFEICAO') {
+        return `
+          <li class="feed-item">
+            <div class="feed-info">
+              <span class="feed-title">🥣 Refeição • ${ev.estacao_nome}</span>
+              <span class="feed-time">${ev.gato_nome} • ${dataHora}</span>
+            </div>
+            <div class="feed-value">+${ev.consumo_g}g</div>
+          </li>
+        `;
+      }
+
+      // Evento de Caixa de Areia
+      const isAlerta = ev.alerta_retencao;
       return `
-        <li class="feed-item">
+        <li class="feed-item ${isAlerta ? 'feed-item-alerta' : ''}">
           <div class="feed-info">
-            <span class="feed-title">Refeição Confirmada</span>
-            <span class="feed-time">Tag: ${ref.gato_tag} • ${dataHora}</span>
+            <span class="feed-title">${isAlerta ? '⚠️ Uso prolongado' : '📦 Caixa de areia'} • ${ev.estacao_nome}</span>
+            <span class="feed-time">${ev.gato_nome} • ${dataHora}</span>
           </div>
-          <div class="feed-value">+${ref.consumo_g}g</div>
+          <div class="feed-value ${isAlerta ? 'feed-value-alerta' : ''}">${ev.duracao_visita_s}s</div>
         </li>
       `;
     }).join('');
   } catch (error) {
-    console.error('Erro ao buscar refeições:', error);
+    console.error('Erro ao buscar eventos:', error);
   }
 }
 
@@ -200,10 +215,10 @@ document.addEventListener('DOMContentLoaded', () => {
   // Carrega os dados iniciais
   carregarGatos();
   carregarEstacoes();
-  carregarRefeicoes();
+  carregarEventos();
 
-  // Polling automático para atualizar refeições em tempo real
-  setInterval(carregarRefeicoes, 5000);
+  // Polling automático para atualizar o feed em tempo real
+  setInterval(carregarEventos, 5000);
 
   // --- CONTROLE DO MODAL DE GATOS ---
   const modalGato = document.getElementById('modal-gato');

@@ -82,6 +82,39 @@ def listar_refeicoes(db: Session = Depends(get_db)):
 def listar_uso_caixa(db: Session = Depends(get_db)):
     return db.query(UsoCaixa).order_by(UsoCaixa.created_at.desc()).limit(50).all()
 
+
+@app.get("/api/eventos")
+def listar_eventos(db: Session = Depends(get_db)):
+    """Feed unificado de atividade: refeições + uso da caixa de areia,
+    já com nome do gato e nome da estação resolvidos."""
+    mapa_estacoes = {e.mac_address: e.nome for e in db.query(Estacao).all()}
+
+    eventos = []
+
+    refeicoes = db.query(Refeicao).order_by(Refeicao.created_at.desc()).limit(50).all()
+    for r in refeicoes:
+        eventos.append({
+            "tipo": "REFEICAO",
+            "created_at": r.created_at,
+            "gato_nome": r.gato.nome if r.gato else f"Tag desconhecida ({r.gato_tag})",
+            "estacao_nome": mapa_estacoes.get(r.estacao_id, r.estacao_id or "Estação desconhecida"),
+            "consumo_g": r.consumo_g,
+        })
+
+    usos_caixa = db.query(UsoCaixa).order_by(UsoCaixa.created_at.desc()).limit(50).all()
+    for u in usos_caixa:
+        eventos.append({
+            "tipo": "CAIXA",
+            "created_at": u.created_at,
+            "gato_nome": u.gato.nome if u.gato else "Gato não identificado",
+            "estacao_nome": mapa_estacoes.get(u.estacao_id, u.estacao_id or "Estação desconhecida"),
+            "duracao_visita_s": u.duracao_visita_s,
+            "alerta_retencao": u.alerta_retencao,
+        })
+
+    eventos.sort(key=lambda e: e["created_at"], reverse=True)
+    return eventos[:50]
+
 # --- Adicione este Schema abaixo do GatoCreate ---
 class GatoUpdate(BaseModel):
     tag_rfid: Optional[str] = None

@@ -150,6 +150,14 @@ body {
   color: var(--accent-green);
 }
 
+.feed-item-alerta {
+  border-left-color: var(--accent-alert);
+}
+
+.feed-value-alerta {
+  color: var(--accent-alert);
+}
+
 /* Modal */
 .modal-overlay {
   position: fixed;
