@@ -9,9 +9,15 @@ if ('serviceWorker' in navigator) {
   });
 }
 
+// ======================================================
+// 🐱 PETS (GATOS)
+// ======================================================
+
 // --- Listar Gatos ---
 async function carregarGatos() {
   const container = document.getElementById('lista-gatos');
+  if (!container) return;
+
   try {
     const response = await fetch('/api/gatos');
     const gatos = await response.json();
@@ -43,9 +49,104 @@ async function carregarGatos() {
   }
 }
 
-// --- Listar Refeições ---
+// --- Funções Globais do Modal de Gatos ---
+window.prepararEdicaoGato = (id, tag, nome, nascimento, peso, jejum, caixa) => {
+  console.log('[CRUD Gatos] Preparando edição do ID:', id);
+  gatoEmEdicaoId = id;
+
+  document.getElementById('tag_rfid').value = tag || '';
+  document.getElementById('nome').value = nome || '';
+  document.getElementById('data_nascimento').value = nascimento || '';
+  document.getElementById('peso_meta_g').value = peso || 4000;
+  document.getElementById('limite_jejum_horas').value = jejum || 24;
+  document.getElementById('limite_caixa_segundos').value = caixa || 300;
+
+  const tituloModal = document.getElementById('modal-titulo');
+  if (tituloModal) tituloModal.innerText = 'Editar Pet';
+
+  document.getElementById('modal-gato').classList.remove('hidden');
+};
+
+window.deletarGato = async (id, nome) => {
+  if (!confirm(`Tem certeza que deseja excluir o pet "${nome}"?`)) return;
+
+  try {
+    const res = await fetch(`/api/gatos/${id}`, { method: 'DELETE' });
+    if (res.ok) {
+      console.log('[CRUD Gatos] Excluído com sucesso');
+      carregarGatos();
+    } else {
+      alert('Erro ao excluir pet.');
+    }
+  } catch (err) {
+    console.error('Erro ao deletar gato:', err);
+  }
+};
+
+// ======================================================
+// 📡 ESTAÇÕES IOT
+// ======================================================
+
+// --- Listar Estações ---
+async function carregarEstacoes() {
+  const container = document.getElementById('lista-estacoes');
+  if (!container) return;
+
+  try {
+    const response = await fetch('/api/estacoes');
+    const estacoes = await response.json();
+
+    if (!estacoes || estacoes.length === 0) {
+      container.innerHTML = '<p style="color: var(--text-muted); font-size: 0.85rem;">Nenhuma estação vinculada.</p>';
+      return;
+    }
+
+    container.innerHTML = `
+      <div class="gato-grid">
+        ${estacoes.map(est => `
+          <div class="gato-card">
+            <div class="gato-card-header">
+              <h3>${est.tipo === 'COMIDA' ? '🥣' : '📦'} ${est.nome}</h3>
+              <div class="gato-actions">
+                <button class="btn-icon" onclick="deletarEstacao(${est.id}, '${est.nome}')" title="Excluir">🗑️</button>
+              </div>
+            </div>
+            <p><strong>ID:</strong> ${est.mac_address}</p>
+            <p><strong>Tipo:</strong> ${est.tipo === 'COMIDA' ? 'Alimentador' : 'Sanitário'}</p>
+          </div>
+        `).join('')}
+      </div>
+    `;
+  } catch (error) {
+    console.error('Erro ao buscar estações:', error);
+  }
+}
+
+// --- Função Global para Deletar Estação ---
+window.deletarEstacao = async (id, nome) => {
+  if (!confirm(`Deseja desvincular a estação "${nome}"?`)) return;
+
+  try {
+    const res = await fetch(`/api/estacoes/${id}`, { method: 'DELETE' });
+    if (res.ok) {
+      console.log('[CRUD Estações] Estação desvinculada');
+      carregarEstacoes();
+    } else {
+      alert('Erro ao excluir estação.');
+    }
+  } catch (err) {
+    console.error('Erro ao deletar estação:', err);
+  }
+};
+
+// ======================================================
+// 🥩 HISTÓRICO DE REFEIÇÕES
+// ======================================================
+
 async function carregarRefeicoes() {
   const container = document.getElementById('lista-refeicoes');
+  if (!container) return;
+
   try {
     const response = await fetch('/api/refeicoes');
     const refeicoes = await response.json();
@@ -72,69 +173,42 @@ async function carregarRefeicoes() {
   }
 }
 
-// --- Funções Globais do Modal ---
-window.prepararEdicaoGato = (id, tag, nome, nascimento, peso, jejum, caixa) => {
-  console.log('[CRUD] Preparando edição do gato ID:', id);
-  gatoEmEdicaoId = id;
+// ======================================================
+// 🚀 INICIALIZAÇÃO E EVENT LISTENERS
+// ======================================================
 
-  document.getElementById('tag_rfid').value = tag || '';
-  document.getElementById('nome').value = nome || '';
-  document.getElementById('data_nascimento').value = nascimento || '';
-  document.getElementById('peso_meta_g').value = peso || 4000;
-  document.getElementById('limite_jejum_horas').value = jejum || 24;
-  document.getElementById('limite_caixa_segundos').value = caixa || 300;
-
-  const tituloModal = document.getElementById('modal-titulo');
-  if (tituloModal) tituloModal.innerText = 'Editar Pet';
-
-  document.getElementById('modal-gato').classList.remove('hidden');
-};
-
-window.deletarGato = async (id, nome) => {
-  if (!confirm(`Tem certeza que deseja excluir o pet "${nome}"?`)) return;
-
-  try {
-    const res = await fetch(`/api/gatos/${id}`, { method: 'DELETE' });
-    if (res.ok) {
-      console.log('[CRUD] Gato excluído com sucesso');
-      carregarGatos();
-    } else {
-      alert('Erro ao excluir pet.');
-    }
-  } catch (err) {
-    console.error('Erro ao deletar:', err);
-  }
-};
-
-// --- Inicialização e Controle de Eventos ---
 document.addEventListener('DOMContentLoaded', () => {
+  // Carrega os dados iniciais
   carregarGatos();
+  carregarEstacoes();
   carregarRefeicoes();
+
+  // Polling automático para atualizar refeições em tempo real
   setInterval(carregarRefeicoes, 5000);
 
-  const modal = document.getElementById('modal-gato');
-  const btnAbrir = document.getElementById('btn-abrir-modal');
-  const btnFechar = document.getElementById('btn-fechar-modal');
-  const form = document.getElementById('form-gato');
+  // --- CONTROLE DO MODAL DE GATOS ---
+  const modalGato = document.getElementById('modal-gato');
+  const btnAbrirGato = document.getElementById('btn-abrir-modal');
+  const btnFecharGato = document.getElementById('btn-fechar-modal');
+  const formGato = document.getElementById('form-gato');
 
-  if (btnAbrir) {
-    btnAbrir.addEventListener('click', () => {
+  if (btnAbrirGato && modalGato) {
+    btnAbrirGato.addEventListener('click', () => {
       gatoEmEdicaoId = null;
-      if (form) form.reset();
+      if (formGato) formGato.reset();
       const tituloModal = document.getElementById('modal-titulo');
       if (tituloModal) tituloModal.innerText = 'Cadastrar Novo Pet';
-      modal.classList.remove('hidden');
+      modalGato.classList.remove('hidden');
     });
   }
 
-  if (btnFechar) {
-    btnFechar.addEventListener('click', () => modal.classList.add('hidden'));
+  if (btnFecharGato && modalGato) {
+    btnFecharGato.addEventListener('click', () => modalGato.classList.add('hidden'));
   }
 
-  // Intercepção do Submit
-  if (form) {
-    form.addEventListener('submit', async (e) => {
-      e.preventDefault(); // Previne o reload padrão da página
+  if (formGato) {
+    formGato.addEventListener('submit', async (e) => {
+      e.preventDefault();
 
       const gatoPayload = {
         tag_rfid: document.getElementById('tag_rfid').value,
@@ -149,7 +223,7 @@ document.addEventListener('DOMContentLoaded', () => {
       const url = isEdicao ? `/api/gatos/${gatoEmEdicaoId}` : '/api/gatos';
       const method = isEdicao ? 'PUT' : 'POST';
 
-      console.log(`[CRUD] Enviando requisição ${method} para ${url}`, gatoPayload);
+      console.log(`[CRUD Gatos] Enviando ${method} para ${url}`, gatoPayload);
 
       try {
         const res = await fetch(url, {
@@ -159,19 +233,68 @@ document.addEventListener('DOMContentLoaded', () => {
         });
 
         if (res.ok) {
-          console.log('[CRUD] Salvo com sucesso!');
-          modal.classList.add('hidden');
-          form.reset();
+          modalGato.classList.add('hidden');
+          formGato.reset();
           gatoEmEdicaoId = null;
           carregarGatos();
         } else {
           const errData = await res.json();
-          console.error('[CRUD] Erro do servidor:', errData);
-          alert('Erro ao salvar: ' + (errData.detail || 'Verifique os dados enviados.'));
+          alert('Erro ao salvar pet: ' + (errData.detail || 'Verifique os dados enviados.'));
         }
       } catch (err) {
-        console.error('[CRUD] Erro de rede:', err);
+        console.error('[CRUD Gatos] Erro de rede:', err);
         alert('Erro de conexão ao salvar pet.');
+      }
+    });
+  }
+
+  // --- CONTROLE DO MODAL DE ESTAÇÕES ---
+  const modalEst = document.getElementById('modal-estacao');
+  const btnAbrirEst = document.getElementById('btn-abrir-modal-estacao');
+  const btnFecharEst = document.getElementById('btn-fechar-modal-estacao');
+  const formEst = document.getElementById('form-estacao');
+
+  if (btnAbrirEst && modalEst) {
+    btnAbrirEst.addEventListener('click', () => {
+      if (formEst) formEst.reset();
+      modalEst.classList.remove('hidden');
+    });
+  }
+
+  if (btnFecharEst && modalEst) {
+    btnFecharEst.addEventListener('click', () => modalEst.classList.add('hidden'));
+  }
+
+  if (formEst) {
+    formEst.addEventListener('submit', async (e) => {
+      e.preventDefault();
+
+      const estacaoPayload = {
+        mac_address: document.getElementById('mac_address').value,
+        nome: document.getElementById('nome_estacao').value,
+        tipo: document.getElementById('tipo_estacao').value
+      };
+
+      console.log('[CRUD Estações] Enviando POST para /api/estacoes', estacaoPayload);
+
+      try {
+        const res = await fetch('/api/estacoes', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(estacaoPayload)
+        });
+
+        if (res.ok) {
+          modalEst.classList.add('hidden');
+          formEst.reset();
+          carregarEstacoes();
+        } else {
+          const errData = await res.json();
+          alert('Erro ao vincular estação: ' + (errData.detail || 'Verifique os dados.'));
+        }
+      } catch (err) {
+        console.error('[CRUD Estações] Erro de rede:', err);
+        alert('Erro de conexão ao salvar estação.');
       }
     });
   }

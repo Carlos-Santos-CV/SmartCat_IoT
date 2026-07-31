@@ -125,3 +125,55 @@ def deletar_gato(gato_id: int, db: Session = Depends(get_db)):
     db.delete(db_gato)
     db.commit()
     return {"message": f"Pet {db_gato.nome} removido com sucesso."}
+
+
+# --- Schemas Pydantic para Estações ---
+class EstacaoCreate(BaseModel):
+    mac_address: str
+    nome: str
+    tipo: str  # "COMIDA" ou "CAIXA"
+
+class EstacaoUpdate(BaseModel):
+    nome: Optional[str] = None
+    tipo: Optional[str] = None
+
+# --- Endpoints da API de Estações ---
+@app.get("/api/estacoes")
+def listar_estacoes(db: Session = Depends(get_db)):
+    return db.query(Estacao).all()
+
+@app.post("/api/estacoes")
+def criar_estacao(estacao: EstacaoCreate, db: Session = Depends(get_db)):
+    db_existente = db.query(Estacao).filter(Estacao.mac_address == estacao.mac_address).first()
+    if db_existente:
+        raise HTTPException(status_code=400, detail="Dispositivo com este MAC já cadastrado.")
+    
+    nova_estacao = Estacao(**estacao.dict())
+    db.add(nova_estacao)
+    db.commit()
+    db.refresh(nova_estacao)
+    return nova_estacao
+
+@app.put("/api/estacoes/{estacao_id}")
+def atualizar_estacao(estacao_id: int, estacao_data: EstacaoUpdate, db: Session = Depends(get_db)):
+    db_estacao = db.query(Estacao).filter(Estacao.id == estacao_id).first()
+    if not db_estacao:
+        raise HTTPException(status_code=404, detail="Estação não encontrada.")
+    
+    update_data = estacao_data.dict(exclude_unset=True)
+    for key, value in update_data.items():
+        setattr(db_estacao, key, value)
+    
+    db.commit()
+    db.refresh(db_estacao)
+    return db_estacao
+
+@app.delete("/api/estacoes/{estacao_id}")
+def deletar_estacao(estacao_id: int, db: Session = Depends(get_db)):
+    db_estacao = db.query(Estacao).filter(Estacao.id == estacao_id).first()
+    if not db_estacao:
+        raise HTTPException(status_code=404, detail="Estação não encontrada.")
+    
+    db.delete(db_estacao)
+    db.commit()
+    return {"message": "Estação removida."}

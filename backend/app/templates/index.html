@@ -80,6 +80,47 @@
             </div>
         </div>
 
+        <!-- Seção de Dispositivos / Estações IoT -->
+        <section class="card">
+            <div class="card-header">
+                <h2>📡 Estações IoT Conectadas</h2>
+                <button id="btn-abrir-modal-estacao" class="btn-primary">+ Nova Estação</button>
+            </div>
+            <div id="lista-estacoes">Carregando estações...</div>
+        </section>
+
+        <!-- MODAL DE VÍNCULO DE ESTAÇÃO -->
+        <div id="modal-estacao" class="modal-overlay hidden">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3 id="modal-estacao-titulo">Vincular Estação IoT</h3>
+                    <button id="btn-fechar-modal-estacao" class="btn-close" type="button">&times;</button>
+                </div>
+
+                <form id="form-estacao">
+                    <div class="form-group">
+                        <label for="mac_address">ID do Hardware (MAC Address):</label>
+                        <input type="text" id="mac_address" placeholder="Ex: ESP32_240AC4000110" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="nome_estacao">Nome do Local/Aparelho:</label>
+                        <input type="text" id="nome_estacao" placeholder="Ex: Pote de Comida da Sala" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="tipo_estacao">Função da Estação:</label>
+                        <select id="tipo_estacao" style="background-color: #0f172a; color: white; padding: 0.6rem; border-radius: 6px; border: 1px solid var(--border-color);" required>
+                            <option value="COMIDA">🥣 Alimentador (Pote de Comida)</option>
+                            <option value="CAIXA">📦 Sanitário (Caixa de Areia)</option>
+                        </select>
+                    </div>
+
+                    <button type="submit" class="btn-submit">Salvar Estação</button>
+                </form>
+            </div>
+        </div>
+
         <script src="/static/js/app.js?v=2"></script>
     </body>
 </html>

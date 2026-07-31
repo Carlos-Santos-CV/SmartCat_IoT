@@ -53,5 +53,14 @@ class UsoCaixa(Base):
 
     gato = relationship("Gato", back_populates="visitas_caixa")
 
+# Adicione esta classe ao final do seu database.py
+class Estacao(Base):
+    __tablename__ = "estacoes"
+
+    id = Column(Integer, primary_key=True, index=True)
+    mac_address = Column(String, unique=True, index=True, nullable=False) # Ex: ESP32_240AC4000110
+    nome = Column(String, nullable=False)                                # Ex: Pote da Sala
+    tipo = Column(String, nullable=False)                                # "COMIDA" ou "CAIXA"
+    created_at = Column(DateTime, default=datetime.utcnow)
 
 Base.metadata.create_all(bind=engine)
