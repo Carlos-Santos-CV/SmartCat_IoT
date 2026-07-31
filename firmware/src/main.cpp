@@ -29,6 +29,16 @@ MFRC522 rfid(HardwareConfig::SS_PIN, HardwareConfig::RST_PIN);
 WiFiClient espClient;
 PubSubClient client(espClient);
 
+// String global para armazenar o ID único do dispositivo derivado do MAC
+String dispositivoID = "";
+
+/** Função para obter o ID Dinâmico baseado no MAC Address **/
+String getDeviceID() {
+  String mac = WiFi.macAddress();
+  mac.replace(":", ""); // Remove os dois pontos do MAC
+  return "ESP32_" + mac;
+}
+
 /** Non-blocking Connection Handling **/
 
 bool isWifiConnected = false;
@@ -41,7 +51,9 @@ void handleWiFi() {
     lastWifiCheck = millis();
   } else if (WiFi.status() == WL_CONNECTED && !isWifiConnected) {
     isWifiConnected = true;
-    Serial.println("[Wi-Fi] Conectado!");
+    dispositivoID = getDeviceID(); // Gera o ID assim que o Wi-Fi inicializa a interface
+    Serial.print("[Wi-Fi] Conectado! Dispositivo ID: ");
+    Serial.println(dispositivoID);
   }
 }
 
@@ -50,7 +62,8 @@ unsigned long lastMqttCheck = 0;
 void handleMQTT() {
   if (!client.connected() && millis() - lastMqttCheck > 5000) {
     Serial.println("[MQTT] Tentando conectar ao Broker...");
-    String clientId = "SmartCat_S3_" + String(random(0xffff), HEX);
+    // Usa o ID único do dispositivo na conexão MQTT para evitar desconexões
+    String clientId = dispositivoID.length() > 0 ? dispositivoID : "SmartCat_S3_" + String(random(0xffff), HEX);
     if (client.connect(clientId.c_str())) {
       Serial.println("[MQTT] Conectado!");
     } else {
@@ -72,7 +85,7 @@ void setup() {
   rfid.PCD_Init();
 
   client.setServer(NetworkConfig::BROKER_MQTT, NetworkConfig::PORTA_MQTT);
-  Serial.println("\n=== SmartCat ESP32-S3 Inicializado ===");
+  Serial.println("\n=== SmartCat ESP32-S3 Inicializado (ID Dinâmico via MAC) ===");
 }
 
 void loop() {
@@ -82,6 +95,9 @@ void loop() {
   if (client.connected()) {
     client.loop();
   }
+
+  // Fallback caso tente rodar sem conectar o Wi-Fi
+  String estacaoIdAtual = dispositivoID.length() > 0 ? dispositivoID : "ESP32_DESCONHECIDO";
 
   // ======================================================
   // 1. ESTAÇÃO POTE DE COMIDA (RFID + Leitura de Peso)
@@ -99,12 +115,10 @@ void loop() {
     float pesoConsumidoG =
         map(valorAnalogico, 0, HardwareConfig::MAX_ANALOG_VALUE, 5, 80);
 
-    String nomeGato = (tagID == "A1B2C3D4") ? "Luna" : "Thor";
-
+    // JSON sem hardcode: ID da estação vem dinamicamente do hardware
     StaticJsonDocument<256> doc;
-    doc["estacao_id"] = "pote_sala_s3";
+    doc["estacao_id"] = estacaoIdAtual;
     doc["gato_tag"] = tagID;
-    doc["gato_nome"] = nomeGato;
     doc["consumo_g"] = pesoConsumidoG;
 
     char bufferJSON[256];
@@ -123,7 +137,7 @@ void loop() {
     }
   }
 
-// ======================================================
+  // ======================================================
   // 2. ESTAÇÃO CAIXA DE AREIA (Simulado pelo Clique do Joystick)
   // ======================================================
   static bool emUsoCaixa = false;
@@ -136,20 +150,19 @@ void loop() {
   if (ultimoEstadoBotao == HIGH && estadoBotaoAtual == LOW) {
     delay(100); // Debounce
     if (!emUsoCaixa) {
-      // Clique 1: Gato Entrou na Caixa
+      // Clique 1: Entrada na Caixa
       emUsoCaixa = true;
       tempoEntradaCaixa = millis();
-      Serial.println("\n[Caixa de Areia] Gato ENTROU na caixa...");
+      Serial.println("\n[Caixa de Areia] Presenca detectada na caixa...");
     } else {
-      // Clique 2: Gato Saiu da Caixa
+      // Clique 2: Saída da Caixa
       emUsoCaixa = false;
       unsigned long duracaoVisitaSegundos = (millis() - tempoEntradaCaixa) / 1000;
 
+      // JSON da Caixa sem hardcode de ID
       StaticJsonDocument<256> docCaixa;
-      docCaixa["estacao_id"] = "caixa_banheiro_s3";
-      docCaixa["gato_nome"] = "Thor";
+      docCaixa["estacao_id"] = estacaoIdAtual;
       docCaixa["duracao_visita_s"] = duracaoVisitaSegundos;
-      docCaixa["alerta_retencao"] = (duracaoVisitaSegundos > 300);
 
       char bufferCaixa[256];
       serializeJson(docCaixa, bufferCaixa);
