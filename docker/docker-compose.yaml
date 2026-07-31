@@ -1,5 +1,4 @@
 services:
-  # 1. Banco de Dados PostgreSQL
   db:
     image: postgres:15-alpine
     container_name: smartcat_db
@@ -12,8 +11,12 @@ services:
       - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U smartcat_user -d smartcat_db"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
 
-  # 2. Broker MQTT Local (Para testes sem depender de internet)
   broker:
     image: eclipse-mosquitto:2
     container_name: smartcat_broker
@@ -23,7 +26,6 @@ services:
     volumes:
       - ./mosquitto.conf:/mosquitto/config/mosquitto.conf
 
-  # 3. Backend Python (FastAPI + Worker MQTT + APScheduler)
   web:
       build:
         context: ../backend
@@ -39,8 +41,10 @@ services:
       volumes:
         - ../backend:/app
       depends_on:
-      - db
-      - broker
+        db:
+          condition: service_healthy
+        broker:
+          condition: service_started
 
 volumes:
   postgres_data:
