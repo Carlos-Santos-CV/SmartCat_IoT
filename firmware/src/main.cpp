@@ -22,6 +22,11 @@ constexpr int RST_PIN = 4;
 constexpr int PINO_JOY_PESO = 1;
 constexpr int PINO_JOY_SW = 2;
 constexpr int MAX_ANALOG_VALUE = 4095;
+// Janela de tempo em que uma leitura RFID feita no pote de comida ainda
+// é considerada válida para identificar o gato na caixa de areia.
+// Necessário porque, nesse hardware simulado, há um único leitor
+// compartilhado entre as duas estações (não há leitor dedicado na caixa).
+constexpr unsigned long JANELA_IDENTIFICACAO_MS = 10000; // 10 segundos
 } // namespace HardwareConfig
 
 // Global Objects
@@ -31,6 +36,12 @@ PubSubClient client(espClient);
 
 // String global para armazenar o ID único do dispositivo derivado do MAC
 String dispositivoID = "";
+
+// Última tag lida no pote de comida e o instante dessa leitura.
+// Usada para tentar identificar o gato na caixa de areia, mas só
+// dentro da JANELA_IDENTIFICACAO_MS (ver acima).
+String ultimaTagLida = "";
+unsigned long timestampUltimaTag = 0;
 
 /** Função para obter o ID Dinâmico baseado no MAC Address **/
 String getDeviceID() {
@@ -110,6 +121,8 @@ void loop() {
       tagID += String(rfid.uid.uidByte[i], HEX);
     }
     tagID.toUpperCase();
+    ultimaTagLida = tagID;
+    timestampUltimaTag = millis();
 
     int valorAnalogico = analogRead(HardwareConfig::PINO_JOY_PESO);
     float pesoConsumidoG =
@@ -143,6 +156,7 @@ void loop() {
   static bool emUsoCaixa = false;
   static unsigned long tempoEntradaCaixa = 0;
   static bool ultimoEstadoBotao = HIGH;
+  static String tagCaixaAtual = "";
 
   bool estadoBotaoAtual = digitalRead(HardwareConfig::PINO_JOY_SW);
 
@@ -153,6 +167,13 @@ void loop() {
       // Clique 1: Entrada na Caixa
       emUsoCaixa = true;
       tempoEntradaCaixa = millis();
+
+      // Usa a última tag lida no pote de comida, mas só se foi lida
+      // recentemente (dentro da janela de identificação). Isso evita
+      // atribuir a visita a um gato que comeu horas atrás.
+      bool tagRecente = (millis() - timestampUltimaTag) <= HardwareConfig::JANELA_IDENTIFICACAO_MS;
+      tagCaixaAtual = tagRecente ? ultimaTagLida : "";
+
       Serial.println("\n[Caixa de Areia] Presenca detectada na caixa...");
     } else {
       // Clique 2: Saída da Caixa
@@ -162,6 +183,7 @@ void loop() {
       // JSON da Caixa sem hardcode de ID
       StaticJsonDocument<256> docCaixa;
       docCaixa["estacao_id"] = estacaoIdAtual;
+      docCaixa["gato_tag"] = tagCaixaAtual;
       docCaixa["duracao_visita_s"] = duracaoVisitaSegundos;
 
       char bufferCaixa[256];

@@ -106,7 +106,7 @@ def listar_eventos(db: Session = Depends(get_db)):
         eventos.append({
             "tipo": "CAIXA",
             "created_at": u.created_at,
-            "gato_nome": u.gato.nome if u.gato else "Gato não identificado",
+            "gato_nome": u.gato.nome if u.gato else f"Tag desconhecida ({u.gato_tag})",
             "estacao_nome": mapa_estacoes.get(u.estacao_id, u.estacao_id or "Estação desconhecida"),
             "duracao_visita_s": u.duracao_visita_s,
             "alerta_retencao": u.alerta_retencao,

@@ -47,6 +47,7 @@ class UsoCaixa(Base):
     id = Column(Integer, primary_key=True, index=True)
     gato_id = Column(Integer, ForeignKey("gatos.id"), nullable=True)
     estacao_id = Column(String)
+    gato_tag = Column(String)
     duracao_visita_s = Column(Integer)
     alerta_retencao = Column(Boolean, default=False)
     created_at = Column(DateTime, default=datetime.utcnow)

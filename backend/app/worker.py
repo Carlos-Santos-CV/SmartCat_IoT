@@ -44,6 +44,7 @@ def on_message(client, userdata, msg):
             evento = UsoCaixa(
                 gato_id=gato_id,
                 estacao_id=payload.get("estacao_id"),
+                gato_tag=tag_recebida,
                 duracao_visita_s=duracao,
                 alerta_retencao=gerar_alerta
             )
