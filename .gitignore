@@ -1,0 +1,4 @@
+.DS_Store
+firmware/.cache/
+firmware/.pio/
+firmware/.vscode/
