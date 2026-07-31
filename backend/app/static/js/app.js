@@ -1,4 +1,5 @@
 let gatoEmEdicaoId = null;
+let estacaoEmEdicaoId = null;
 
 // --- Registro do Service Worker ---
 if ('serviceWorker' in navigator) {
@@ -108,6 +109,7 @@ async function carregarEstacoes() {
             <div class="gato-card-header">
               <h3>${est.tipo === 'COMIDA' ? '🥣' : '📦'} ${est.nome}</h3>
               <div class="gato-actions">
+                <button class="btn-icon" onclick="prepararEdicaoEstacao(${est.id}, '${est.mac_address}', '${est.nome}', '${est.tipo}')" title="Editar">✏️</button>
                 <button class="btn-icon" onclick="deletarEstacao(${est.id}, '${est.nome}')" title="Excluir">🗑️</button>
               </div>
             </div>
@@ -121,6 +123,23 @@ async function carregarEstacoes() {
     console.error('Erro ao buscar estações:', error);
   }
 }
+
+// --- Função Global para Preparar Edição de Estação ---
+window.prepararEdicaoEstacao = (id, mac, nome, tipo) => {
+  console.log('[CRUD Estações] Preparando edição do ID:', id);
+  estacaoEmEdicaoId = id;
+
+  const campoMac = document.getElementById('mac_address');
+  campoMac.value = mac || '';
+  campoMac.disabled = true; // MAC address não pode ser alterado após vinculado
+  document.getElementById('nome_estacao').value = nome || '';
+  document.getElementById('tipo_estacao').value = tipo || '';
+
+  const tituloModal = document.getElementById('modal-estacao-titulo');
+  if (tituloModal) tituloModal.innerText = 'Editar Estação';
+
+  document.getElementById('modal-estacao').classList.remove('hidden');
+};
 
 // --- Função Global para Deletar Estação ---
 window.deletarEstacao = async (id, nome) => {
@@ -256,7 +275,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
   if (btnAbrirEst && modalEst) {
     btnAbrirEst.addEventListener('click', () => {
+      estacaoEmEdicaoId = null;
       if (formEst) formEst.reset();
+      const macField = document.getElementById('mac_address');
+      if (macField) macField.disabled = false;
+      const tituloModal = document.getElementById('modal-estacao-titulo');
+      if (tituloModal) tituloModal.innerText = 'Vincular Estação IoT';
       modalEst.classList.remove('hidden');
     });
   }
@@ -269,17 +293,27 @@ document.addEventListener('DOMContentLoaded', () => {
     formEst.addEventListener('submit', async (e) => {
       e.preventDefault();
 
-      const estacaoPayload = {
-        mac_address: document.getElementById('mac_address').value,
-        nome: document.getElementById('nome_estacao').value,
-        tipo: document.getElementById('tipo_estacao').value
-      };
+      const isEdicaoEst = estacaoEmEdicaoId !== null;
 
-      console.log('[CRUD Estações] Enviando POST para /api/estacoes', estacaoPayload);
+      const estacaoPayload = isEdicaoEst
+        ? {
+            nome: document.getElementById('nome_estacao').value,
+            tipo: document.getElementById('tipo_estacao').value
+          }
+        : {
+            mac_address: document.getElementById('mac_address').value,
+            nome: document.getElementById('nome_estacao').value,
+            tipo: document.getElementById('tipo_estacao').value
+          };
+
+      const urlEst = isEdicaoEst ? `/api/estacoes/${estacaoEmEdicaoId}` : '/api/estacoes';
+      const methodEst = isEdicaoEst ? 'PUT' : 'POST';
+
+      console.log(`[CRUD Estações] Enviando ${methodEst} para ${urlEst}`, estacaoPayload);
 
       try {
-        const res = await fetch('/api/estacoes', {
-          method: 'POST',
+        const res = await fetch(urlEst, {
+          method: methodEst,
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(estacaoPayload)
         });
@@ -287,6 +321,9 @@ document.addEventListener('DOMContentLoaded', () => {
         if (res.ok) {
           modalEst.classList.add('hidden');
           formEst.reset();
+          const macField = document.getElementById('mac_address');
+          if (macField) macField.disabled = false;
+          estacaoEmEdicaoId = null;
           carregarEstacoes();
         } else {
           const errData = await res.json();
