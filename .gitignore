@@ -2,3 +2,4 @@
 firmware/.cache/
 firmware/.pio/
 firmware/.vscode/
+backend/app/__pycache__/

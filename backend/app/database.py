@@ -1,10 +1,9 @@
 import os
-from datetime import datetime
-from sqlalchemy import Column, DateTime, Float, Integer, String, Boolean, create_engine
+from datetime import datetime, date
+from sqlalchemy import Column, DateTime, Date, Float, Integer, String, Boolean, ForeignKey, create_engine
 from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.orm import sessionmaker
+from sqlalchemy.orm import sessionmaker, relationship
 
-# Lê a URL do PostgreSQL das variáveis de ambiente (ou usa SQLite por padrão se for rodar standalone)
 DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///./smartcat.db")
 
 engine = create_engine(DATABASE_URL)
@@ -12,27 +11,47 @@ SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 Base = declarative_base()
 
 
+class Gato(Base):
+    __tablename__ = "gatos"
+
+    id = Column(Integer, primary_key=True, index=True)
+    tag_rfid = Column(String, unique=True, index=True, nullable=False)
+    nome = Column(String, nullable=False)
+    data_nascimento = Column(Date, nullable=False)
+    peso_meta_g = Column(Float, nullable=True)
+    limite_jejum_horas = Column(Integer, default=24)        # Padrão: 24 horas
+    limite_caixa_segundos = Column(Integer, default=300)   # Padrão: 5 minutos (300s)
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+    # Relacionamentos
+    refeicoes = relationship("Refeicao", back_populates="gato")
+    visitas_caixa = relationship("UsoCaixa", back_populates="gato")
+
+
 class Refeicao(Base):
     __tablename__ = "refeicoes"
 
     id = Column(Integer, primary_key=True, index=True)
+    gato_id = Column(Integer, ForeignKey("gatos.id"), nullable=True)
     estacao_id = Column(String)
     gato_tag = Column(String)
-    gato_nome = Column(String)
     consumo_g = Column(Float)
     created_at = Column(DateTime, default=datetime.utcnow)
+
+    gato = relationship("Gato", back_populates="refeicoes")
 
 
 class UsoCaixa(Base):
     __tablename__ = "uso_caixa"
 
     id = Column(Integer, primary_key=True, index=True)
+    gato_id = Column(Integer, ForeignKey("gatos.id"), nullable=True)
     estacao_id = Column(String)
-    gato_nome = Column(String)
     duracao_visita_s = Column(Integer)
-    alerta_retencao = Column(Boolean)
+    alerta_retencao = Column(Boolean, default=False)
     created_at = Column(DateTime, default=datetime.utcnow)
 
+    gato = relationship("Gato", back_populates="visitas_caixa")
 
-# Cria as tabelas automaticamente no banco se elas não existirem
+
 Base.metadata.create_all(bind=engine)
