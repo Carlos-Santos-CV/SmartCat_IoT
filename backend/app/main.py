@@ -6,7 +6,7 @@ from fastapi.responses import HTMLResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
-from app.database import Gato, Refeicao, SessionLocal, UsoCaixa
+from app.database import Estacao, Gato, Refeicao, SessionLocal, UsoCaixa
 
 app = FastAPI(title="SmartCat API & PWA", version="1.0.0")
 
