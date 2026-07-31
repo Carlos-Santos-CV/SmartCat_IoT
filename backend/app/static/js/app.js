@@ -159,6 +159,74 @@ window.deletarEstacao = async (id, nome) => {
 };
 
 // ======================================================
+// 🚨 ALERTAS DE SAÚDE
+// ======================================================
+
+const ROTULOS_ALERTA = {
+  JEJUM: { icone: '⏳', titulo: 'Jejum prolongado' },
+  RETENCAO_CAIXA: { icone: '📦', titulo: 'Uso prolongado da caixa' },
+  PESO: { icone: '⚖️', titulo: 'Variação de peso' },
+};
+
+async function carregarAlertas() {
+  const container = document.getElementById('lista-alertas');
+  const badge = document.getElementById('alertas-count-badge');
+  if (!container) return;
+
+  try {
+    const response = await fetch('/api/alertas?apenas_abertos=true');
+    const alertas = await response.json();
+
+    if (badge) {
+      if (alertas.length > 0) {
+        badge.textContent = alertas.length;
+        badge.classList.remove('hidden');
+      } else {
+        badge.classList.add('hidden');
+      }
+    }
+
+    if (!alertas || alertas.length === 0) {
+      container.innerHTML = '<li class="feed-item"><span class="feed-time">✅ Nenhum alerta em aberto. Tudo certo com os pets!</span></li>';
+      return;
+    }
+
+    container.innerHTML = alertas.map(a => {
+      const rotulo = ROTULOS_ALERTA[a.tipo] || { icone: '⚠️', titulo: a.tipo };
+      const dataHora = new Date(a.created_at).toLocaleString('pt-BR', {
+        day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit'
+      });
+
+      return `
+        <li class="feed-item feed-item-alerta">
+          <div class="feed-info">
+            <span class="feed-title">${rotulo.icone} ${rotulo.titulo} • ${a.gato_nome}</span>
+            <span class="feed-time">${a.mensagem}</span>
+            <span class="feed-time">${dataHora}</span>
+          </div>
+          <button class="btn-resolver-alerta" onclick="resolverAlerta(${a.id})" title="Marcar como resolvido">✔️</button>
+        </li>
+      `;
+    }).join('');
+  } catch (error) {
+    console.error('Erro ao buscar alertas:', error);
+  }
+}
+
+window.resolverAlerta = async (id) => {
+  try {
+    const res = await fetch(`/api/alertas/${id}/resolver`, { method: 'PUT' });
+    if (res.ok) {
+      carregarAlertas();
+    } else {
+      alert('Erro ao resolver alerta.');
+    }
+  } catch (err) {
+    console.error('Erro ao resolver alerta:', err);
+  }
+};
+
+// ======================================================
 // 🥩 ATIVIDADE RECENTE (Refeições + Caixa de Areia)
 // ======================================================
 
@@ -216,9 +284,11 @@ document.addEventListener('DOMContentLoaded', () => {
   carregarGatos();
   carregarEstacoes();
   carregarEventos();
+  carregarAlertas();
 
-  // Polling automático para atualizar o feed em tempo real
+  // Polling automático para atualizar o feed e os alertas em tempo real
   setInterval(carregarEventos, 5000);
+  setInterval(carregarAlertas, 10000);
 
   // --- CONTROLE DO MODAL DE GATOS ---
   const modalGato = document.getElementById('modal-gato');

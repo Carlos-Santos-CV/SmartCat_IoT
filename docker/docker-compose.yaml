@@ -38,6 +38,11 @@ services:
         - DATABASE_URL=postgresql://smartcat_user:smartcat_password@db:5432/smartcat_db
         - MQTT_BROKER=broker.hivemq.com
         - MQTT_PORT=1883
+        # Notificações Web Push (Alertas de Saúde) — gere com scripts/generate_vapid_keys.py
+        # e defina os valores em docker/.env (veja docker/.env.example)
+        - VAPID_PUBLIC_KEY=${VAPID_PUBLIC_KEY}
+        - VAPID_PRIVATE_KEY=${VAPID_PRIVATE_KEY}
+        - VAPID_CLAIM_EMAIL=${VAPID_CLAIM_EMAIL:-mailto:contato@smartcat.local}
       volumes:
         - ../backend:/app
       depends_on:

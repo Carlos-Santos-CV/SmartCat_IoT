@@ -13,11 +13,23 @@
 
         <header class="navbar">
             <h1>🐱 SmartCat</h1>
-            <span id="status-badge" class="badge">Conectado</span>
+            <div class="navbar-actions">
+                <button id="btn-ativar-notificacoes" class="btn-notif">🔕 Ativar notificações</button>
+                <span id="status-badge" class="badge">Conectado</span>
+            </div>
         </header>
 
         <main
             class="container">
+            <!-- Seção de Alertas de Saúde -->
+            <section class="card">
+                <div class="card-header">
+                    <h2>🚨 Alertas de Saúde</h2>
+                    <span id="alertas-count-badge" class="badge badge-alerta hidden">0</span>
+                </div>
+                <ul id="lista-alertas" class="feed-list">Carregando alertas...</ul>
+            </section>
+
             <!-- Seção de Pets com Botão Adicionar -->
             <section class="card">
                 <div class="card-header">
@@ -121,6 +133,7 @@
             </div>
         </div>
 
-        <script src="/static/js/app.js?v=2"></script>
+        <script src="/static/js/push.js?v=1"></script>
+        <script src="/static/js/app.js?v=3"></script>
     </body>
 </html>

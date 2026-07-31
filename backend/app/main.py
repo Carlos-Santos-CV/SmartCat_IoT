@@ -1,12 +1,17 @@
 import os
-from datetime import date
+from datetime import date, datetime
 from typing import List, Optional
+from dotenv import load_dotenv
 from fastapi import Depends, FastAPI, HTTPException
 from fastapi.responses import HTMLResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
-from app.database import Estacao, Gato, Refeicao, SessionLocal, UsoCaixa
+from app.database import Alerta, Estacao, Gato, PushSubscription, Refeicao, SessionLocal, UsoCaixa
+
+load_dotenv()
+
+VAPID_PUBLIC_KEY = os.getenv("VAPID_PUBLIC_KEY", "")
 
 app = FastAPI(title="SmartCat API & PWA", version="1.0.0")
 
@@ -210,3 +215,94 @@ def deletar_estacao(estacao_id: int, db: Session = Depends(get_db)):
     db.delete(db_estacao)
     db.commit()
     return {"message": "Estação removida."}
+
+
+# ======================================================
+# 🚨 ALERTAS DE SAÚDE
+# ======================================================
+
+@app.get("/api/alertas")
+def listar_alertas(apenas_abertos: bool = False, db: Session = Depends(get_db)):
+    """Lista os alertas de saúde gerados pelo sistema (mais recentes primeiro).
+    Use ?apenas_abertos=true para retornar somente os ainda não resolvidos."""
+    query = db.query(Alerta)
+    if apenas_abertos:
+        query = query.filter(Alerta.resolvido == False)  # noqa: E712
+
+    alertas = query.order_by(Alerta.created_at.desc()).limit(100).all()
+    return [
+        {
+            "id": a.id,
+            "gato_id": a.gato_id,
+            "gato_nome": a.gato.nome if a.gato else "Pet removido",
+            "tipo": a.tipo,
+            "severidade": a.severidade,
+            "mensagem": a.mensagem,
+            "resolvido": a.resolvido,
+            "created_at": a.created_at,
+        }
+        for a in alertas
+    ]
+
+
+@app.put("/api/alertas/{alerta_id}/resolver")
+def resolver_alerta(alerta_id: int, db: Session = Depends(get_db)):
+    """Marca um alerta como resolvido/reconhecido pelo tutor."""
+    db_alerta = db.query(Alerta).filter(Alerta.id == alerta_id).first()
+    if not db_alerta:
+        raise HTTPException(status_code=404, detail="Alerta não encontrado.")
+
+    db_alerta.resolvido = True
+    db_alerta.resolvido_em = datetime.utcnow()
+    db.commit()
+    db.refresh(db_alerta)
+    return db_alerta
+
+
+# ======================================================
+# 🔔 NOTIFICAÇÕES WEB PUSH
+# ======================================================
+
+class PushSubscriptionCreate(BaseModel):
+    endpoint: str
+    keys: dict  # {"p256dh": "...", "auth": "..."}
+
+
+@app.get("/api/push/vapid-public-key")
+def obter_chave_publica_vapid():
+    """Fornece a chave pública VAPID para o frontend registrar a inscrição push."""
+    if not VAPID_PUBLIC_KEY:
+        raise HTTPException(
+            status_code=503,
+            detail="Notificações push não configuradas no servidor (VAPID_PUBLIC_KEY ausente).",
+        )
+    return {"publicKey": VAPID_PUBLIC_KEY}
+
+
+@app.post("/api/push/subscribe")
+def inscrever_push(sub: PushSubscriptionCreate, db: Session = Depends(get_db)):
+    """Registra (ou atualiza) a inscrição de push do navegador do tutor."""
+    p256dh = sub.keys.get("p256dh")
+    auth = sub.keys.get("auth")
+    if not p256dh or not auth:
+        raise HTTPException(status_code=400, detail="Chaves de inscrição inválidas.")
+
+    existente = db.query(PushSubscription).filter(PushSubscription.endpoint == sub.endpoint).first()
+    if existente:
+        existente.p256dh = p256dh
+        existente.auth = auth
+        db.commit()
+        return {"message": "Inscrição atualizada."}
+
+    nova = PushSubscription(endpoint=sub.endpoint, p256dh=p256dh, auth=auth)
+    db.add(nova)
+    db.commit()
+    return {"message": "Inscrição registrada com sucesso."}
+
+
+@app.post("/api/push/unsubscribe")
+def desinscrever_push(sub: PushSubscriptionCreate, db: Session = Depends(get_db)):
+    """Remove a inscrição de push (ex.: usuário desativou notificações)."""
+    db.query(PushSubscription).filter(PushSubscription.endpoint == sub.endpoint).delete()
+    db.commit()
+    return {"message": "Inscrição removida."}

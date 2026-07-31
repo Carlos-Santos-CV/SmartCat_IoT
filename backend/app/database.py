@@ -64,4 +64,32 @@ class Estacao(Base):
     tipo = Column(String, nullable=False)                                # "COMIDA" ou "CAIXA"
     created_at = Column(DateTime, default=datetime.utcnow)
 
+
+class Alerta(Base):
+    """Registro persistente de alertas de saúde/comportamento gerados pelo sistema."""
+    __tablename__ = "alertas"
+
+    id = Column(Integer, primary_key=True, index=True)
+    gato_id = Column(Integer, ForeignKey("gatos.id"), nullable=False)
+    tipo = Column(String, nullable=False)          # "JEJUM" | "RETENCAO_CAIXA" | "PESO"
+    severidade = Column(String, default="ALTA")    # "ALTA" | "MEDIA" | "BAIXA"
+    mensagem = Column(String, nullable=False)
+    resolvido = Column(Boolean, default=False)
+    resolvido_em = Column(DateTime, nullable=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+    gato = relationship("Gato")
+
+
+class PushSubscription(Base):
+    """Inscrição do navegador do tutor para receber notificações Web Push."""
+    __tablename__ = "push_subscriptions"
+
+    id = Column(Integer, primary_key=True, index=True)
+    endpoint = Column(String, unique=True, index=True, nullable=False)
+    p256dh = Column(String, nullable=False)
+    auth = Column(String, nullable=False)
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+
 Base.metadata.create_all(bind=engine)

@@ -4,3 +4,5 @@ firmware/.pio/
 firmware/.vscode/
 backend/app/__pycache__/
 firmware/compile commands.json
+.env
+backend/.env
