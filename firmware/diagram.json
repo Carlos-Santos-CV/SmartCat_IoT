@@ -1,0 +1,42 @@
+{
+  "version": 1,
+  "author": "SmartCat Team",
+  "editor": "wokwi",
+  "parts": [
+    {
+      "type": "board-esp32-s3-devkitc-1",
+      "id": "esp",
+      "top": 0,
+      "left": 0,
+      "attrs": {}
+    },
+    {
+      "type": "board-mfrc522",
+      "id": "rfid2",
+      "top": -20,
+      "left": 220,
+      "attrs": {}
+    },
+    {
+      "type": "wokwi-analog-joystick",
+      "id": "joy1",
+      "top": 200,
+      "left": 220,
+      "attrs": {}
+    }
+  ],
+  "connections": [
+    [ "esp:GND.1", "rfid2:GND", "black", [] ],
+    [ "esp:3V3.1", "rfid2:3V3", "red", [] ],
+    [ "esp:4", "rfid2:RST", "gray", [] ],
+    [ "esp:5", "rfid2:SDA", "yellow", [] ],
+    [ "esp:12", "rfid2:SCK", "green", [] ],
+    [ "esp:11", "rfid2:MOSI", "blue", [] ],
+    [ "esp:13", "rfid2:MISO", "orange", [] ],
+    [ "esp:GND.2", "joy1:GND", "black", [] ],
+    [ "esp:3V3.2", "joy1:VCC", "red", [] ],
+    [ "esp:1", "joy1:VERT", "purple", [] ],
+    [ "esp:2", "joy1:SEL", "white", [] ]
+  ],
+  "dependencies": {}
+}
