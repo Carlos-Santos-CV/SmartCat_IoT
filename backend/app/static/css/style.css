@@ -235,3 +235,30 @@ input {
   cursor: pointer;
   margin-top: 0.5rem;
 }
+
+/* Botões e Ações nos Cards de Gato */
+.gato-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.4rem;
+}
+
+.gato-actions {
+  display: flex;
+  gap: 0.3rem;
+}
+
+.btn-icon {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 0.9rem;
+  padding: 0.2rem;
+  border-radius: 4px;
+  transition: background-color 0.2s;
+}
+
+.btn-icon:hover {
+  background-color: var(--border-color);
+}

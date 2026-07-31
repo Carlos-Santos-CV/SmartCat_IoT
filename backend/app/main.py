@@ -81,3 +81,47 @@ def listar_refeicoes(db: Session = Depends(get_db)):
 @app.get("/api/caixa-areia")
 def listar_uso_caixa(db: Session = Depends(get_db)):
     return db.query(UsoCaixa).order_by(UsoCaixa.created_at.desc()).limit(50).all()
+
+# --- Adicione este Schema abaixo do GatoCreate ---
+class GatoUpdate(BaseModel):
+    tag_rfid: Optional[str] = None
+    nome: Optional[str] = None
+    data_nascimento: Optional[date] = None
+    peso_meta_g: Optional[float] = None
+    limite_jejum_horas: Optional[int] = None
+    limite_caixa_segundos: Optional[int] = None
+
+
+# --- Novos Endpoints do CRUD de Pets ---
+
+@app.put("/api/gatos/{gato_id}")
+def atualizar_gato(gato_id: int, gato_data: GatoUpdate, db: Session = Depends(get_db)):
+    db_gato = db.query(Gato).filter(Gato.id == gato_id).first()
+    if not db_gato:
+        raise HTTPException(status_code=404, detail="Gato não encontrado.")
+
+    # Se alterou a Tag RFID, verifica se já não pertence a outro gato
+    if gato_data.tag_rfid and gato_data.tag_rfid != db_gato.tag_rfid:
+        tag_existente = db.query(Gato).filter(Gato.tag_rfid == gato_data.tag_rfid).first()
+        if tag_existente:
+            raise HTTPException(status_code=400, detail="Esta Tag RFID já está em uso por outro pet.")
+
+    # Atualiza apenas os campos enviados
+    update_dict = gato_data.dict(exclude_unset=True)
+    for key, value in update_dict.items():
+        setattr(db_gato, key, value)
+
+    db.commit()
+    db.refresh(db_gato)
+    return db_gato
+
+
+@app.delete("/api/gatos/{gato_id}")
+def deletar_gato(gato_id: int, db: Session = Depends(get_db)):
+    db_gato = db.query(Gato).filter(Gato.id == gato_id).first()
+    if not db_gato:
+        raise HTTPException(status_code=404, detail="Gato não encontrado.")
+
+    db.delete(db_gato)
+    db.commit()
+    return {"message": f"Pet {db_gato.nome} removido com sucesso."}
