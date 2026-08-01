@@ -248,7 +248,7 @@ async function carregarEventos() {
 
       if (ev.tipo === 'REFEICAO') {
         return `
-          <li class="feed-item">
+          <li class="feed-item feed-item-refeicao">
             <div class="feed-info">
               <span class="feed-title">🥣 Refeição • ${ev.estacao_nome}</span>
               <span class="feed-time">${ev.gato_nome} • ${dataHora}</span>
@@ -261,7 +261,7 @@ async function carregarEventos() {
       // Evento de Caixa de Areia
       const isAlerta = ev.alerta_retencao;
       return `
-        <li class="feed-item ${isAlerta ? 'feed-item-alerta' : ''}">
+        <li class="feed-item ${isAlerta ? 'feed-item-alerta' : 'feed-item-caixa'}">
           <div class="feed-info">
             <span class="feed-title">${isAlerta ? '⚠️ Uso prolongado' : '📦 Caixa de areia'} • ${ev.estacao_nome}</span>
             <span class="feed-time">${ev.gato_nome} • ${dataHora}</span>

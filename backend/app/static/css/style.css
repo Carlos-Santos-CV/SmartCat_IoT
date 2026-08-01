@@ -1,176 +1,494 @@
+/* ======================================================
+   SmartCat — Design Tokens (macOS Light)
+   Cinza-claro de janela, painéis translúcidos com vibrancy,
+   tipografia do sistema (SF Pro/-apple-system), dados de
+   sensor em SF Mono. Listas agrupadas com divisores finos,
+   no espírito do System Settings / Mail / Reminders.
+   ====================================================== */
+
 :root {
-  --bg-primary: #0f172a;
-  --bg-card: #1e293b;
-  --text-main: #f8fafc;
-  --text-muted: #94a3b8;
-  --accent-blue: #2563eb;
-  --accent-green: #22c55e;
-  --accent-alert: #ef4444;
-  --border-color: #334155;
+  /* Superfícies */
+  --bg: #efeef3;
+  --bg-elevated: rgba(255, 255, 255, 0.78);
+  --bg-elevated-solid: #ffffff;
+  --bg-inset: #f6f6f8;
+  --bg-row-hover: rgba(0, 0, 0, 0.035);
+  --hairline: rgba(60, 60, 67, 0.13);
+  --hairline-strong: rgba(60, 60, 67, 0.2);
+
+  /* Texto (escala macOS: label / secondary / tertiary) */
+  --ink: #1d1d1f;
+  --ink-muted: #6e6e73;
+  --ink-faint: #a1a1a6;
+
+  /* Acentos — mantêm o significado: dourado=refeição, menta=caixa, coral=alerta */
+  --gold: #c8891a;
+  --gold-dim: rgba(200, 137, 26, 0.12);
+  --coral: #e2593f;
+  --coral-dim: rgba(226, 89, 63, 0.11);
+  --mint: #2fa968;
+  --mint-dim: rgba(47, 169, 104, 0.12);
+
+  /* Tipografia */
+  --font-display: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Inter", sans-serif;
+  --font-body: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Inter", sans-serif;
+  --font-mono: ui-monospace, "SF Mono", "JetBrains Mono", Menlo, monospace;
+
+  --radius-lg: 14px;
+  --radius-md: 10px;
+  --radius-sm: 7px;
 }
 
 * {
   box-sizing: border-box;
   margin: 0;
   padding: 0;
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.001ms !important;
+    transition-duration: 0.001ms !important;
+  }
 }
 
 body {
-  background-color: var(--bg-primary);
-  color: var(--text-main);
-  padding-bottom: 30px;
+  background-color: var(--bg);
+  background-image:
+    radial-gradient(ellipse 800px 460px at 10% -12%, rgba(200, 137, 26, 0.05), transparent 60%),
+    radial-gradient(ellipse 700px 420px at 105% 0%, rgba(47, 169, 104, 0.045), transparent 55%);
+  background-attachment: fixed;
+  color: var(--ink);
+  font-family: var(--font-body);
+  padding-bottom: 3rem;
+  -webkit-font-smoothing: antialiased;
 }
 
+h1, h2, h3 {
+  font-family: var(--font-display);
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+
+/* ======================================================
+   Cabeçalho
+   ====================================================== */
+
 .navbar {
-  background-color: var(--bg-card);
-  padding: 1rem 1.5rem;
+  background-color: rgba(255, 255, 255, 0.72);
+  backdrop-filter: blur(20px) saturate(1.6);
+  -webkit-backdrop-filter: blur(20px) saturate(1.6);
+  padding: 0.85rem 1.25rem;
   display: flex;
   justify-content: space-between;
   align-items: center;
-  border-bottom: 1px solid var(--border-color);
+  border-bottom: 1px solid var(--hairline);
   position: sticky;
   top: 0;
   z-index: 10;
 }
 
-.navbar h1 {
-  font-size: 1.25rem;
-  color: #38bdf8;
+.navbar-brand {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
 }
 
-.badge {
-  background-color: rgba(34, 197, 94, 0.15);
-  color: var(--accent-green);
-  border: 1px solid var(--accent-green);
-  padding: 0.25rem 0.6rem;
-  border-radius: 20px;
-  font-size: 0.75rem;
-  font-weight: bold;
+.logo-mark {
+  color: var(--gold);
+  flex-shrink: 0;
 }
+
+.navbar h1 {
+  font-size: 1.2rem;
+  font-style: italic;
+  font-weight: 600;
+  color: var(--ink);
+  letter-spacing: -0.01em;
+}
+
+.navbar-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+}
+
+/* Badge de status — "respiração" no lugar de um ponto verde estático */
+.badge {
+  background-color: var(--mint-dim);
+  color: var(--mint);
+  border: 1px solid rgba(47, 169, 104, 0.22);
+  padding: 0.3rem 0.7rem 0.3rem 0.55rem;
+  border-radius: 999px;
+  font-family: var(--font-body);
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.badge::before {
+  content: "";
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background-color: var(--mint);
+  box-shadow: 0 0 0 0 rgba(47, 169, 104, 0.5);
+  animation: respirar 2.4s ease-in-out infinite;
+}
+
+@keyframes respirar {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(47, 169, 104, 0.4); }
+  50% { box-shadow: 0 0 0 5px rgba(47, 169, 104, 0); }
+}
+
+.badge-alerta {
+  background-color: var(--coral-dim);
+  color: var(--coral);
+  border-color: rgba(226, 89, 63, 0.25);
+}
+
+.badge-alerta::before {
+  background-color: var(--coral);
+  animation: none;
+}
+
+.badge-alerta.hidden {
+  display: none;
+}
+
+/* ======================================================
+   Layout
+   ====================================================== */
 
 .container {
-  max-width: 600px;
-  margin: 1.5rem auto;
-  padding: 0 1rem;
+  max-width: 640px;
+  margin: 1.75rem auto;
+  padding: 0 1.1rem;
   display: flex;
   flex-direction: column;
-  gap: 1.25rem;
+  gap: 1.4rem;
 }
 
 .card {
-  background-color: var(--bg-card);
-  border: 1px solid var(--border-color);
-  border-radius: 12px;
-  padding: 1.25rem;
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3);
+  background-color: var(--bg-elevated);
+  backdrop-filter: blur(20px) saturate(1.4);
+  -webkit-backdrop-filter: blur(20px) saturate(1.4);
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius-lg);
+  padding: 1.15rem 1.25rem 1.3rem;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03), 0 10px 28px -18px rgba(0, 0, 0, 0.22);
 }
 
 .card-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  border-bottom: 1px solid var(--border-color);
-  padding-bottom: 0.5rem;
-  margin-bottom: 1rem;
+  margin-bottom: 0.65rem;
+  padding-bottom: 0.7rem;
+  border-bottom: 1px solid var(--hairline);
 }
 
 .card-header h2 {
-  font-size: 1rem;
-  color: var(--text-main);
+  font-family: var(--font-body);
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--ink-muted);
 }
 
+/* ======================================================
+   Botões
+   ====================================================== */
+
 .btn-primary {
-  background-color: var(--accent-blue);
-  color: white;
+  background-color: var(--gold);
+  color: #ffffff;
   border: none;
-  padding: 0.4rem 0.8rem;
-  border-radius: 6px;
-  font-weight: bold;
+  padding: 0.42rem 0.85rem;
+  border-radius: var(--radius-sm);
+  font-weight: 600;
+  font-size: 0.78rem;
+  cursor: pointer;
+  transition: filter 0.15s ease, transform 0.15s ease;
+  box-shadow: 0 1px 1px rgba(0, 0, 0, 0.08);
+}
+
+.btn-primary:hover {
+  filter: brightness(1.06);
+}
+
+.btn-primary:active {
+  transform: scale(0.97);
+}
+
+.btn-submit {
+  width: 100%;
+  background-color: var(--gold);
+  color: #ffffff;
+  border: none;
+  padding: 0.75rem;
+  border-radius: var(--radius-sm);
+  font-weight: 600;
+  font-size: 0.92rem;
+  cursor: pointer;
+  margin-top: 0.6rem;
+  transition: filter 0.15s ease;
+}
+
+.btn-submit:hover {
+  filter: brightness(1.06);
+}
+
+.btn-notif {
+  background-color: rgba(0, 0, 0, 0.04);
+  border: 1px solid var(--hairline);
+  color: var(--ink-muted);
+  padding: 0.34rem 0.75rem;
+  border-radius: 999px;
+  font-size: 0.72rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn-notif:hover {
+  border-color: var(--gold);
+  color: var(--ink);
+}
+
+.btn-notif.btn-notif-ativo {
+  background-color: var(--gold-dim);
+  border-color: rgba(200, 137, 26, 0.3);
+  color: var(--gold);
+}
+
+.btn-close {
+  background: rgba(0, 0, 0, 0.05);
+  border: none;
+  color: var(--ink-muted);
+  font-size: 1.2rem;
+  line-height: 1;
+  cursor: pointer;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: background-color 0.15s ease, color 0.15s ease;
+}
+
+.btn-close:hover {
+  background-color: rgba(0, 0, 0, 0.09);
+  color: var(--ink);
+}
+
+.btn-icon {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 0.82rem;
+  padding: 0.3rem;
+  border-radius: var(--radius-sm);
+  transition: background-color 0.15s ease;
+}
+
+.btn-icon:hover {
+  background-color: rgba(0, 0, 0, 0.05);
+}
+
+.btn-resolver-alerta {
+  background: #ffffff;
+  border: 1px solid var(--hairline-strong);
+  color: var(--mint);
+  border-radius: var(--radius-sm);
+  padding: 0.35rem 0.55rem;
   cursor: pointer;
   font-size: 0.85rem;
+  transition: background-color 0.15s ease, border-color 0.15s ease;
+  flex-shrink: 0;
 }
+
+.btn-resolver-alerta:hover {
+  background-color: var(--mint-dim);
+  border-color: rgba(47, 169, 104, 0.35);
+}
+
+/* ======================================================
+   Cartões de Pet / Estação
+   ====================================================== */
 
 .gato-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
-  gap: 0.75rem;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 0.65rem;
 }
 
 .gato-card {
-  background-color: #0f172a;
-  border: 1px solid var(--border-color);
-  padding: 0.85rem;
-  border-radius: 8px;
-  text-align: center;
+  background-color: var(--bg-inset);
+  border: 1px solid var(--hairline);
+  padding: 0.85rem 0.95rem;
+  border-radius: var(--radius-md);
+  text-align: left;
+  transition: border-color 0.15s ease, background-color 0.15s ease;
+}
+
+.gato-card:hover {
+  background-color: #ffffff;
+  border-color: var(--hairline-strong);
+}
+
+.gato-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 0.5rem;
+  margin-bottom: 0.45rem;
 }
 
 .gato-card h3 {
-  color: #38bdf8;
-  font-size: 1.1rem;
-  margin-bottom: 0.2rem;
+  font-size: 1rem;
+  font-style: italic;
+  font-weight: 600;
+  color: var(--ink);
 }
 
 .gato-card p {
-  font-size: 0.8rem;
-  color: var(--text-muted);
+  font-family: var(--font-mono);
+  font-size: 0.71rem;
+  color: var(--ink-muted);
+  line-height: 1.5;
+  letter-spacing: -0.01em;
 }
+
+.gato-actions {
+  display: flex;
+  gap: 0.15rem;
+  flex-shrink: 0;
+}
+
+/* ======================================================
+   Feed de Atividade / Alertas
+   "Grouped list" no espírito do System Settings: linhas
+   contínuas dentro de um único bloco, separadas por fios
+   finos, com um pontinho colorido indicando a categoria.
+   ====================================================== */
 
 .feed-list {
   list-style: none;
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  background-color: var(--bg-inset);
 }
 
 .feed-item {
-  background-color: #0f172a;
-  border-left: 4px solid var(--accent-blue);
-  padding: 0.75rem 1rem;
-  border-radius: 4px;
+  background-color: transparent;
+  padding: 0.65rem 0.8rem;
   display: flex;
   justify-content: space-between;
   align-items: center;
+  gap: 0.75rem;
+  border-bottom: 1px solid var(--hairline);
+  position: relative;
+  padding-left: 1.35rem;
+  transition: background-color 0.15s ease;
+}
+
+.feed-item:hover {
+  background-color: var(--bg-row-hover);
+}
+
+.feed-item:last-child {
+  border-bottom: none;
+}
+
+/* Pontinho de categoria — como as etiquetas coloridas de
+   Lembretes/Finder, no lugar de uma barra lateral genérica */
+.feed-item::before {
+  content: "";
+  position: absolute;
+  left: 0.75rem;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background-color: var(--ink-faint);
+}
+
+.feed-item-refeicao::before {
+  background-color: var(--gold);
+}
+
+.feed-item-caixa::before {
+  background-color: var(--mint);
+}
+
+.feed-item-alerta {
+  background-color: var(--coral-dim);
+}
+
+.feed-item-alerta::before {
+  background-color: var(--coral);
+}
+
+.feed-info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+  min-width: 0;
 }
 
 .feed-title {
-  font-weight: bold;
-  font-size: 0.9rem;
+  font-weight: 600;
+  font-size: 0.85rem;
+  color: var(--ink);
 }
 
 .feed-time {
-  font-size: 0.75rem;
-  color: var(--text-muted);
+  font-family: var(--font-mono);
+  font-size: 0.71rem;
+  color: var(--ink-muted);
   display: block;
 }
 
 .feed-value {
-  font-size: 1.1rem;
-  font-weight: bold;
-  color: var(--accent-green);
-}
-
-.feed-item-alerta {
-  border-left-color: var(--accent-alert);
+  font-family: var(--font-mono);
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--gold);
+  flex-shrink: 0;
 }
 
 .feed-value-alerta {
-  color: var(--accent-alert);
+  color: var(--coral);
 }
 
-/* Modal */
+/* ======================================================
+   Modal
+   ====================================================== */
+
 .modal-overlay {
   position: fixed;
   top: 0;
   left: 0;
   width: 100%;
   height: 100%;
-  background-color: rgba(0, 0, 0, 0.75);
+  background-color: rgba(29, 29, 31, 0.28);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
   display: flex;
   justify-content: center;
   align-items: center;
   z-index: 100;
-  backdrop-filter: blur(4px);
+  padding: 1rem;
 }
 
 .modal-overlay.hidden {
@@ -178,34 +496,32 @@ body {
 }
 
 .modal-content {
-  background-color: var(--bg-card);
-  border: 1px solid var(--border-color);
-  border-radius: 12px;
-  width: 90%;
-  max-width: 450px;
+  background-color: var(--bg-elevated-solid);
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius-lg);
+  width: 100%;
+  max-width: 440px;
   padding: 1.5rem;
+  box-shadow: 0 24px 60px -20px rgba(0, 0, 0, 0.35);
 }
 
 .modal-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 1rem;
+  margin-bottom: 1.15rem;
 }
 
-.btn-close {
-  background: none;
-  border: none;
-  color: var(--text-muted);
-  font-size: 1.5rem;
-  cursor: pointer;
+.modal-header h3 {
+  font-size: 1.1rem;
+  font-style: italic;
 }
 
 .form-group {
-  margin-bottom: 1rem;
+  margin-bottom: 0.95rem;
   display: flex;
   flex-direction: column;
-  gap: 0.3rem;
+  gap: 0.32rem;
 }
 
 .form-row {
@@ -218,112 +534,59 @@ body {
 }
 
 label {
-  font-size: 0.8rem;
-  color: var(--text-muted);
+  font-family: var(--font-body);
+  font-size: 0.71rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--ink-muted);
 }
 
-input {
-  background-color: #0f172a;
-  border: 1px solid var(--border-color);
-  color: var(--text-main);
-  padding: 0.6rem;
-  border-radius: 6px;
-  font-size: 0.9rem;
-}
-
-.btn-submit {
+input,
+.select-field {
+  background-color: var(--bg-inset);
+  border: 1px solid var(--hairline-strong);
+  color: var(--ink);
+  padding: 0.6rem 0.7rem;
+  border-radius: var(--radius-sm);
+  font-family: var(--font-mono);
+  font-size: 0.86rem;
   width: 100%;
-  background-color: var(--accent-green);
-  color: #000;
-  border: none;
-  padding: 0.75rem;
-  border-radius: 6px;
-  font-weight: bold;
-  font-size: 1rem;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+input:focus,
+.select-field:focus {
+  outline: none;
+  border-color: var(--gold);
+  box-shadow: 0 0 0 3px var(--gold-dim);
+}
+
+input::placeholder {
+  color: var(--ink-faint);
+}
+
+input:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.select-field {
+  appearance: none;
+  background-color: #ffffff;
+  background-image: linear-gradient(45deg, transparent 50%, var(--ink-muted) 50%),
+                     linear-gradient(135deg, var(--ink-muted) 50%, transparent 50%);
+  background-position: calc(100% - 18px) center, calc(100% - 13px) center;
+  background-size: 5px 5px, 5px 5px;
+  background-repeat: no-repeat;
   cursor: pointer;
-  margin-top: 0.5rem;
 }
 
-/* Botões e Ações nos Cards de Gato */
-.gato-card-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 0.4rem;
-}
-
-.gato-actions {
-  display: flex;
-  gap: 0.3rem;
-}
-
-.btn-icon {
-  background: none;
-  border: none;
-  cursor: pointer;
-  font-size: 0.9rem;
-  padding: 0.2rem;
-  border-radius: 4px;
-  transition: background-color 0.2s;
-}
-
-.btn-icon:hover {
-  background-color: var(--border-color);
-}
 /* ======================================================
-   🚨 Alertas de Saúde e 🔔 Notificações Push
+   Utilidades
    ====================================================== */
 
-.navbar-actions {
-  display: flex;
-  align-items: center;
-  gap: 0.6rem;
-}
-
-.btn-notif {
-  background-color: transparent;
-  border: 1px solid var(--border-color);
-  color: var(--text-muted);
-  padding: 0.35rem 0.7rem;
-  border-radius: 20px;
-  font-size: 0.75rem;
-  cursor: pointer;
-  transition: all 0.2s;
-}
-
-.btn-notif:hover {
-  border-color: var(--accent-blue);
-  color: var(--text-main);
-}
-
-.btn-notif.btn-notif-ativo {
-  background-color: rgba(37, 99, 235, 0.15);
-  border-color: var(--accent-blue);
-  color: #60a5fa;
-}
-
-.badge-alerta {
-  background-color: rgba(239, 68, 68, 0.15);
-  color: var(--accent-alert);
-  border-color: var(--accent-alert);
-}
-
-.badge-alerta.hidden {
-  display: none;
-}
-
-.btn-resolver-alerta {
-  background: none;
-  border: 1px solid var(--border-color);
-  color: var(--accent-green);
-  border-radius: 6px;
-  padding: 0.3rem 0.5rem;
-  cursor: pointer;
+.text-muted-note {
+  color: var(--ink-muted);
   font-size: 0.85rem;
-  transition: background-color 0.2s;
-  flex-shrink: 0;
-}
-
-.btn-resolver-alerta:hover {
-  background-color: rgba(34, 197, 94, 0.15);
 }
