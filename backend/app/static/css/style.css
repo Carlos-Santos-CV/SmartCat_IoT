@@ -155,6 +155,10 @@ h1, h2, h3 {
   animation: none;
 }
 
+.btn-notif.hidden {
+  display: none;
+}
+
 .badge-alerta.hidden {
   display: none;
 }

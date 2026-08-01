@@ -8,6 +8,16 @@
         <link rel="manifest" href="/static/manifest.json">
         <meta name="theme-color" content="#efeef3">
 
+        <!-- Instalação em iOS: o Safari não lê o manifest.json para isso,
+             precisa destas tags específicas. -->
+        <link rel="apple-touch-icon" href="/static/icons/apple-touch-icon.png">
+        <meta name="apple-mobile-web-app-capable" content="yes">
+        <meta name="apple-mobile-web-app-status-bar-style" content="default">
+        <meta name="apple-mobile-web-app-title" content="SmartCat">
+
+        <!-- Compatibilidade extra em Android/Chrome mais antigos -->
+        <meta name="mobile-web-app-capable" content="yes">
+
         <!-- A UI usa a fonte do sistema (-apple-system/SF Pro) no macOS/iOS.
              Inter e JetBrains Mono entram só como fallback em outras plataformas. -->
         <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -27,6 +37,7 @@
                 <h1>SmartCat</h1>
             </div>
             <div class="navbar-actions">
+                <button id="btn-instalar-app" class="btn-notif hidden">⬇️ Instalar app</button>
                 <button id="btn-ativar-notificacoes" class="btn-notif">🔕 Ativar notificações</button>
                 <span id="status-badge" class="badge">Conectado</span>
             </div>
@@ -148,6 +159,6 @@
         </div>
 
         <script src="/static/js/push.js?v=1"></script>
-        <script src="/static/js/app.js?v=4"></script>
+        <script src="/static/js/app.js?v=5"></script>
     </body>
 </html>

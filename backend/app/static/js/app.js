@@ -11,6 +11,28 @@ if ('serviceWorker' in navigator) {
 }
 
 // ======================================================
+// ⬇️ INSTALAÇÃO DO APP (Android / Chrome / Edge / desktop)
+// ======================================================
+// O Safari (iOS/macOS) não dispara este evento — lá a instalação é
+// manual, via "Compartilhar" → "Adicionar à Tela de Início".
+let eventoInstalacaoAdiado = null;
+
+window.addEventListener('beforeinstallprompt', (event) => {
+  event.preventDefault();
+  eventoInstalacaoAdiado = event;
+
+  const btn = document.getElementById('btn-instalar-app');
+  if (btn) btn.classList.remove('hidden');
+});
+
+window.addEventListener('appinstalled', () => {
+  console.log('[PWA] App instalado com sucesso.');
+  const btn = document.getElementById('btn-instalar-app');
+  if (btn) btn.classList.add('hidden');
+  eventoInstalacaoAdiado = null;
+});
+
+// ======================================================
 // 🐱 PETS (GATOS)
 // ======================================================
 
@@ -289,6 +311,19 @@ document.addEventListener('DOMContentLoaded', () => {
   // Polling automático para atualizar o feed e os alertas em tempo real
   setInterval(carregarEventos, 5000);
   setInterval(carregarAlertas, 10000);
+
+  // --- BOTÃO DE INSTALAÇÃO DO APP ---
+  const btnInstalar = document.getElementById('btn-instalar-app');
+  if (btnInstalar) {
+    btnInstalar.addEventListener('click', async () => {
+      if (!eventoInstalacaoAdiado) return;
+      eventoInstalacaoAdiado.prompt();
+      const { outcome } = await eventoInstalacaoAdiado.userChoice;
+      console.log(`[PWA] Usuário respondeu ao prompt de instalação: ${outcome}`);
+      eventoInstalacaoAdiado = null;
+      btnInstalar.classList.add('hidden');
+    });
+  }
 
   // --- CONTROLE DO MODAL DE GATOS ---
   const modalGato = document.getElementById('modal-gato');
