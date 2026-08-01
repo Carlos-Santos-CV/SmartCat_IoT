@@ -5,54 +5,17 @@ from datetime import datetime, timedelta
 from apscheduler.schedulers.background import BackgroundScheduler
 from dotenv import load_dotenv
 import paho.mqtt.client as mqtt
-from pywebpush import WebPushException, webpush
-from app.database import Alerta, Gato, PushSubscription, Refeicao, SessionLocal, UsoCaixa
+from app.database import Alerta, Gato, Refeicao, SessionLocal, UsoCaixa
+from app.push_service import enviar_push_para_todos
 
 load_dotenv()
 
 BROKER = os.getenv("MQTT_BROKER", "broker.hivemq.com")
 PORT = int(os.getenv("MQTT_PORT", 1883))
 
-# --- Configuração de Web Push (VAPID) ---
-# Gere seu par de chaves com o script scripts/generate_vapid_keys.py
-VAPID_PRIVATE_KEY = os.getenv("VAPID_PRIVATE_KEY")
-VAPID_PUBLIC_KEY = os.getenv("VAPID_PUBLIC_KEY")
-VAPID_CLAIM_EMAIL = os.getenv("VAPID_CLAIM_EMAIL", "mailto:contato@smartcat.local")
-
 # Janela de deduplicação: não repete o mesmo tipo de alerta para o mesmo
 # gato se já existe um alerta em aberto (não resolvido) gerado dentro desse intervalo.
 JANELA_DEDUPLICACAO_HORAS = 2
-
-
-def _enviar_push_para_todos(db, titulo: str, corpo: str, dados: dict):
-    """Envia uma notificação Web Push para todos os tutores inscritos.
-    Assinaturas inválidas/expiradas (HTTP 404/410) são removidas automaticamente."""
-    if not VAPID_PRIVATE_KEY or not VAPID_PUBLIC_KEY:
-        print("[PUSH] Chaves VAPID não configuradas — pulando envio de notificação.")
-        return
-
-    inscricoes = db.query(PushSubscription).all()
-    payload = json.dumps({"title": titulo, "body": corpo, "data": dados})
-
-    for sub in inscricoes:
-        try:
-            webpush(
-                subscription_info={
-                    "endpoint": sub.endpoint,
-                    "keys": {"p256dh": sub.p256dh, "auth": sub.auth},
-                },
-                data=payload,
-                vapid_private_key=VAPID_PRIVATE_KEY,
-                vapid_claims={"sub": VAPID_CLAIM_EMAIL},
-            )
-        except WebPushException as e:
-            status = e.response.status_code if e.response is not None else None
-            if status in (404, 410):
-                print(f"[PUSH] Assinatura expirada, removendo: {sub.endpoint[:40]}...")
-                db.delete(sub)
-                db.commit()
-            else:
-                print(f"[PUSH ERRO] Falha ao notificar {sub.endpoint[:40]}...: {e}")
 
 
 def registrar_alerta(db, gato: Gato, tipo: str, mensagem: str, severidade: str = "ALTA"):
@@ -84,7 +47,7 @@ def registrar_alerta(db, gato: Gato, tipo: str, mensagem: str, severidade: str =
     db.refresh(novo_alerta)
 
     print(f"[ALERTA {tipo}] 🚨 {mensagem}")
-    _enviar_push_para_todos(
+    enviar_push_para_todos(
         db,
         titulo=f"🐱 SmartCat — {gato.nome}",
         corpo=mensagem,

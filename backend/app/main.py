@@ -8,6 +8,7 @@ from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
 from app.database import Alerta, Estacao, Gato, PushSubscription, Refeicao, SessionLocal, UsoCaixa
+from app.push_service import enviar_push_para_todos
 
 load_dotenv()
 
@@ -306,3 +307,36 @@ def desinscrever_push(sub: PushSubscriptionCreate, db: Session = Depends(get_db)
     db.query(PushSubscription).filter(PushSubscription.endpoint == sub.endpoint).delete()
     db.commit()
     return {"message": "Inscrição removida."}
+
+
+@app.post("/api/push/test")
+def enviar_notificacao_teste(db: Session = Depends(get_db)):
+    """Dispara uma notificação push de teste para todos os tutores inscritos.
+    Serve pra validar rapidamente se a configuração VAPID e a inscrição do
+    navegador estão funcionando, sem precisar esperar um alerta real."""
+    total_inscricoes = db.query(PushSubscription).count()
+    if total_inscricoes == 0:
+        raise HTTPException(
+            status_code=400,
+            detail="Nenhum navegador está inscrito para notificações ainda. "
+                   "Clique em 'Ativar notificações' antes de testar.",
+        )
+
+    resultado = enviar_push_para_todos(
+        db,
+        titulo="🐱 SmartCat — Notificação de Teste",
+        corpo="Se você recebeu isso, as notificações push estão funcionando! 🎉",
+        dados={"tipo": "TESTE"},
+    )
+
+    if not resultado["configurado"]:
+        raise HTTPException(
+            status_code=503,
+            detail="Notificações push não configuradas no servidor "
+                   "(gere as chaves com scripts/generate_vapid_keys.py e configure o .env).",
+        )
+
+    return {
+        "message": f"Notificação de teste enviada para {resultado['enviadas']} dispositivo(s).",
+        **resultado,
+    }

@@ -133,6 +133,7 @@ SmartCat_IoT/
 │   ├── app/
 │   │   ├── main.py            # API REST (FastAPI) — rotas de gatos, estações, alertas, push
 │   │   ├── worker.py          # Worker MQTT — ingestão de telemetria + regras de alerta
+│   │   ├── push_service.py    # Lógica compartilhada de envio de Web Push (VAPID)
 │   │   ├── database.py        # Modelos SQLAlchemy (ORM) e conexão com o banco
 │   │   ├── static/
 │   │   │   └── icons/           # icon-192.png, icon-512.png, apple-touch-icon.png
@@ -318,6 +319,7 @@ Base URL local: `http://localhost:8000`
 | `GET` | `/api/push/vapid-public-key` | Retorna a chave pública VAPID para o navegador se inscrever |
 | `POST` | `/api/push/subscribe` | Registra a inscrição push do navegador do tutor |
 | `POST` | `/api/push/unsubscribe` | Remove a inscrição push |
+| `POST` | `/api/push/test` | Dispara uma notificação de teste para todos os inscritos (debug rápido) |
 
 A documentação interativa (Swagger) fica disponível automaticamente em `/docs` graças ao FastAPI.
 
@@ -339,6 +341,9 @@ O sistema usa o padrão **Web Push + VAPID**, permitindo alertas mesmo com o nav
    ```
 3. No dashboard, o tutor clica em **"🔕 Ativar notificações"** — o navegador se inscreve via `PushManager` e a inscrição é enviada para `POST /api/push/subscribe`.
 4. Quando o worker gera um alerta (`registrar_alerta`), ele envia a notificação para **todas** as inscrições salvas; assinaturas expiradas (HTTP 404/410) são removidas automaticamente.
+5. Depois de ativar, aparece o botão **"🧪 Enviar teste"** — dispara `POST /api/push/test`, útil para validar a configuração VAPID e a inscrição do navegador sem precisar esperar um alerta real de saúde acontecer.
+
+A lógica de envio (`enviar_push_para_todos`) fica centralizada em `backend/app/push_service.py`, reaproveitada tanto pelo `worker.py` (alertas automáticos) quanto pelo `main.py` (endpoint de teste).
 
 ---
 

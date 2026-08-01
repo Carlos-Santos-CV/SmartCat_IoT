@@ -21,8 +21,10 @@ function urlBase64ToUint8Array(base64String) {
 // Verifica se o navegador já está inscrito e atualiza o texto do botão.
 async function atualizarStatusNotificacoes() {
   const btn = document.getElementById('btn-ativar-notificacoes');
+  const btnTeste = document.getElementById('btn-testar-notificacao');
   if (!btn || !('serviceWorker' in navigator) || !('PushManager' in window)) {
     if (btn) btn.style.display = 'none';
+    if (btnTeste) btnTeste.classList.add('hidden');
     return;
   }
 
@@ -31,8 +33,38 @@ async function atualizarStatusNotificacoes() {
     const sub = await reg.pushManager.getSubscription();
     btn.textContent = sub ? '🔔 Notificações ativadas' : '🔕 Ativar notificações';
     btn.classList.toggle('btn-notif-ativo', !!sub);
+    if (btnTeste) btnTeste.classList.toggle('hidden', !sub);
   } catch (err) {
     console.error('[PUSH] Erro ao checar inscrição:', err);
+  }
+}
+
+// Dispara uma notificação de teste via backend, pra debug rápido.
+async function enviarNotificacaoTeste() {
+  const btnTeste = document.getElementById('btn-testar-notificacao');
+  if (btnTeste) {
+    btnTeste.disabled = true;
+    btnTeste.textContent = '🧪 Enviando...';
+  }
+
+  try {
+    const res = await fetch('/api/push/test', { method: 'POST' });
+    const data = await res.json();
+
+    if (!res.ok) {
+      alert(data.detail || 'Erro ao enviar notificação de teste.');
+      return;
+    }
+
+    console.log('[PUSH] Teste enviado:', data);
+  } catch (err) {
+    console.error('[PUSH] Erro ao enviar notificação de teste:', err);
+    alert('Não foi possível contatar o servidor para o teste.');
+  } finally {
+    if (btnTeste) {
+      btnTeste.disabled = false;
+      btnTeste.textContent = '🧪 Enviar teste';
+    }
   }
 }
 
@@ -92,5 +124,10 @@ document.addEventListener('DOMContentLoaded', () => {
   const btn = document.getElementById('btn-ativar-notificacoes');
   if (btn) {
     btn.addEventListener('click', ativarNotificacoesPush);
+  }
+
+  const btnTeste = document.getElementById('btn-testar-notificacao');
+  if (btnTeste) {
+    btnTeste.addEventListener('click', enviarNotificacaoTeste);
   }
 });
