@@ -166,6 +166,8 @@ erDiagram
     GATO ||--o{ REFEICAO : registra
     GATO ||--o{ USO_CAIXA : registra
     GATO ||--o{ ALERTA : gera
+    ESTACAO ||--o{ REFEICAO : origina
+    ESTACAO ||--o{ USO_CAIXA : origina
 
     GATO {
         int id PK
@@ -181,7 +183,8 @@ erDiagram
     REFEICAO {
         int id PK
         int gato_id FK
-        string estacao_id
+        int estacao_id FK "nullable — estação ainda não cadastrada"
+        string estacao_mac "MAC bruto do MQTT, sempre preservado"
         string gato_tag
         float consumo_g
         datetime created_at
@@ -190,7 +193,8 @@ erDiagram
     USO_CAIXA {
         int id PK
         int gato_id FK
-        string estacao_id
+        int estacao_id FK "nullable — estação ainda não cadastrada"
+        string estacao_mac "MAC bruto do MQTT, sempre preservado"
         string gato_tag
         int duracao_visita_s
         bool alerta_retencao
@@ -225,7 +229,7 @@ erDiagram
     }
 ```
 
-> `ESTACAO` não tem chave estrangeira formal com `REFEICAO`/`USO_CAIXA` — a ligação é feita pelo `estacao_id` (MAC do dispositivo), permitindo que eventos de estações ainda não cadastradas sejam registrados mesmo assim.
+> `estacao_id` é uma chave estrangeira de verdade para `ESTACAO.id`, mas fica `nullable`: como os eventos chegam via MQTT identificando a estação só pelo MAC address, é possível que a estação ainda não tenha sido cadastrada no sistema no momento do evento. Por isso existe também o campo `estacao_mac`, que sempre guarda o MAC bruto recebido — nada se perde mesmo quando `estacao_id` fica nulo, e o dado fica disponível para uma eventual reconciliação posterior (ex.: uma refeição registrada antes do tutor cadastrar a estação).
 
 ---
 

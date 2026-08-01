@@ -105,8 +105,6 @@ def listar_uso_caixa(db: Session = Depends(get_db)):
 def listar_eventos(db: Session = Depends(get_db)):
     """Feed unificado de atividade: refeições + uso da caixa de areia,
     já com nome do gato e nome da estação resolvidos."""
-    mapa_estacoes = {e.mac_address: e.nome for e in db.query(Estacao).all()}
-
     eventos = []
 
     refeicoes = db.query(Refeicao).order_by(Refeicao.created_at.desc()).limit(50).all()
@@ -115,7 +113,7 @@ def listar_eventos(db: Session = Depends(get_db)):
             "tipo": "REFEICAO",
             "created_at": r.created_at,
             "gato_nome": r.gato.nome if r.gato else f"Tag desconhecida ({r.gato_tag})",
-            "estacao_nome": mapa_estacoes.get(r.estacao_id, r.estacao_id or "Estação desconhecida"),
+            "estacao_nome": r.estacao.nome if r.estacao else (r.estacao_mac or "Estação desconhecida"),
             "consumo_g": r.consumo_g,
         })
 
@@ -125,7 +123,7 @@ def listar_eventos(db: Session = Depends(get_db)):
             "tipo": "CAIXA",
             "created_at": u.created_at,
             "gato_nome": u.gato.nome if u.gato else f"Tag desconhecida ({u.gato_tag})",
-            "estacao_nome": mapa_estacoes.get(u.estacao_id, u.estacao_id or "Estação desconhecida"),
+            "estacao_nome": u.estacao.nome if u.estacao else (u.estacao_mac or "Estação desconhecida"),
             "duracao_visita_s": u.duracao_visita_s,
             "alerta_retencao": u.alerta_retencao,
         })
