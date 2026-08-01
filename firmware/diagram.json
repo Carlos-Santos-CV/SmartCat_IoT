@@ -4,8 +4,8 @@
   "editor": "wokwi",
   "parts": [
     { "type": "board-esp32-s3-devkitc-1", "id": "esp", "top": 105.42, "left": 14.17, "attrs": {} },
-    { "type": "board-mfrc522", "id": "rfid2", "top": -60, "left": 380, "attrs": {} },
-    { "type": "wokwi-analog-joystick", "id": "joy1", "top": 143.4, "left": 370.2, "attrs": {} }
+    { "type": "board-mfrc522", "id": "rfid2", "top": -41.05, "left": 166.64, "attrs": {} },
+    { "type": "wokwi-analog-joystick", "id": "joy1", "top": 133.8, "left": 245.4, "attrs": {} }
   ],
   "connections": [
     [ "esp:TX", "$serialMonitor:RX", "", [] ],
@@ -17,10 +17,11 @@
     [ "esp:12", "rfid2:SCK", "green", [ "h-96.05", "v-301.78", "v-5.17" ] ],
     [ "esp:11", "rfid2:MOSI", "blue", [ "h-76.85", "v-287.75" ] ],
     [ "esp:13", "rfid2:MISO", "orange", [ "h-57.65", "v-297.35" ] ],
-    [ "esp:GND.2", "joy1:GND", "black", [ "h38.4", "v297.6", "h297.6" ] ],
-    [ "esp:3V3.2", "joy1:VCC", "red", [ "h182.35", "v230.4", "h201.6" ] ],
-    [ "esp:1", "joy1:VERT", "purple", [ "h76.8", "v230.4", "h230.4" ] ],
-    [ "esp:2", "joy1:SEL", "white", [ "h57.6", "v240", "h268.8" ] ]
+    [ "esp:GND.2", "joy1:GND", "black", [ "h38.4", "v230.4", "h172.8" ] ],
+    [ "esp:3V3.2", "joy1:VCC", "red", [ "h182.35", "v144", "h76.8" ] ],
+    [ "esp:1", "joy1:VERT", "purple", [ "h76.8", "v153.6", "h105.6" ] ],
+    [ "esp:2", "joy1:SEL", "white", [ "h57.6", "v163.2", "h144" ] ],
+    [ "rfid2:3.3V", "esp:3V3.1", "red", [ "h-153.6", "v67.2" ] ]
   ],
   "dependencies": {}
 }
