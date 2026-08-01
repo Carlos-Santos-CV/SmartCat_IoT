@@ -1,3 +1,31 @@
+# 🔌 Firmware — SmartCat IoT
+
+Firmware em C++ (Arduino framework) para o **ESP32-S3**, responsável por ler a tag RFID, medir o consumo de ração e o uso da caixa de areia, e publicar tudo via MQTT. Simulado no [Wokwi](https://wokwi.com/) através do `diagram.json`.
+
+## Esquema de Ligação
+
+![Esquema de ligação: ESP32-S3, leitor RFID MFRC522 e joystick analógico](./wiring-diagram.png)
+
+| Componente | Pino do componente | Pino do ESP32-S3 | Fio |
+|---|---|---|---|
+| **MFRC522 (RFID)** | SDA | GPIO 5 | 🟡 Amarelo |
+| | SCK | GPIO 12 | 🟢 Verde |
+| | MOSI | GPIO 11 | 🔵 Azul |
+| | MISO | GPIO 13 | 🟠 Laranja |
+| | GND | GND | ⚫ Preto |
+| | RST | GPIO 4 | ⚪ Cinza |
+| | 3.3V | 3V3 | 🔴 Vermelho |
+| **Joystick Analógico** | VCC | 3V3 | 🔴 Vermelho |
+| | VERT (eixo Y) | GPIO 1 | 🟣 Roxo |
+| | SEL (botão) | GPIO 2 | ⚪ Branco |
+| | GND | GND | ⚫ Preto |
+
+> O pino **IRQ** do MFRC522 não é utilizado pelo firmware atual (a leitura de tag é feita por polling, não por interrupção).
+
+---
+
+## Explicação do Código (`main.cpp`)
+
 Claro! Vou explicar o `firmware/src/main.cpp` por partes — é o código que roda no ESP32-S3 e é responsável por ler o RFID, medir o "peso" e publicar tudo via MQTT.
 
 ## 1. Configurações (namespaces)

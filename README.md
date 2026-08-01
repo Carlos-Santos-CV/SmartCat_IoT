@@ -405,6 +405,10 @@ Sem `DATABASE_URL` definido, o backend cai automaticamente para SQLite local (`s
 
 O firmware foi desenvolvido para **ESP32-S3**, com leitor RFID **MFRC522** e um joystick analógico simulando a célula de carga (peso) e o botão de presença na caixa de areia.
 
+![Esquema de ligação: ESP32-S3, leitor RFID MFRC522 e joystick analógico](./firmware/wiring-diagram.png)
+
+> 📄 Walkthrough completo do código linha a linha em [`firmware/README.md`](./firmware/README.md).
+
 **Simulação (sem hardware físico) via [Wokwi](https://wokwi.com/):**
 1. Abra a pasta `firmware/` no VS Code com a extensão Wokwi instalada, ou importe `diagram.json` diretamente no simulador web.
 2. Compile com PlatformIO (`pio run`) e inicie a simulação — ela usa o `diagram.json` para as ligações e `wokwi.toml` para apontar o binário.
@@ -419,7 +423,7 @@ O firmware foi desenvolvido para **ESP32-S3**, com leitor RFID **MFRC522** e um 
    pio device monitor
    ```
 
-**Ligações principais (ver `diagram.json`):**
+**Ligações principais** (tabela completa com fios/cores em [`firmware/README.md`](./firmware/README.md)):
 
 | Componente | Pino ESP32-S3 |
 |---|---|
