@@ -18,6 +18,7 @@ Sistema integrado de **Internet das Coisas (IoT)** para monitoramento remoto de 
 - [Regras de Alerta de Saúde](#-regras-de-alerta-de-saúde)
 - [API REST](#-api-rest)
 - [Notificações Web Push](#-notificações-web-push)
+- [Instalação em Dispositivos Móveis](#-instalação-em-dispositivos-móveis)
 - [Como Executar](#-como-executar)
   - [Opção A — Docker Compose (recomendado)](#opção-a--docker-compose-recomendado)
   - [Opção B — Execução manual (dev)](#opção-b--execução-manual-dev)
@@ -102,7 +103,7 @@ flowchart LR
   - Jejum prolongado (verificação periódica a cada 15 min)
   - Retenção excessiva na caixa de areia
 - 🔔 **Notificações Web Push** (protocolo VAPID) — o tutor recebe o alerta mesmo com o navegador fechado
-- 📲 **PWA instalável** — manifest + Service Worker, funciona como app nativo em celular/desktop
+- 📲 **PWA instalável e com suporte offline** — manifest + Service Worker (com cache de assets estáticos), ícones dedicados para Android e iOS, e botão de instalação nativo em navegadores compatíveis (ver [Instalação em Dispositivos Móveis](#-instalação-em-dispositivos-móveis))
 - 🔁 **Identificação sem leitor dedicado na caixa** — o firmware reaproveita a última tag lida no pote de comida dentro de uma janela de 10s, simulando a identificação do gato na caixa de areia com um único leitor RFID
 
 ---
@@ -133,7 +134,8 @@ SmartCat_IoT/
 │   │   ├── main.py            # API REST (FastAPI) — rotas de gatos, estações, alertas, push
 │   │   ├── worker.py          # Worker MQTT — ingestão de telemetria + regras de alerta
 │   │   ├── database.py        # Modelos SQLAlchemy (ORM) e conexão com o banco
-│   │   ├── static/             # CSS, JS, ícones, manifest, service worker (PWA)
+│   │   ├── static/
+│   │   │   └── icons/           # icon-192.png, icon-512.png, apple-touch-icon.png
 │   │   └── templates/
 │   │       └── index.html      # Dashboard servido na rota "/"
 │   ├── passenger_wsgi.py       # Entry point para hospedagem via Passenger/cPanel
@@ -337,6 +339,25 @@ O sistema usa o padrão **Web Push + VAPID**, permitindo alertas mesmo com o nav
    ```
 3. No dashboard, o tutor clica em **"🔕 Ativar notificações"** — o navegador se inscreve via `PushManager` e a inscrição é enviada para `POST /api/push/subscribe`.
 4. Quando o worker gera um alerta (`registrar_alerta`), ele envia a notificação para **todas** as inscrições salvas; assinaturas expiradas (HTTP 404/410) são removidas automaticamente.
+
+---
+
+## 📲 Instalação em Dispositivos Móveis
+
+O SmartCat é um PWA instalável — funciona em tela cheia, como um app nativo, sem passar pela loja de aplicativos. O comportamento muda conforme a plataforma:
+
+| Plataforma | Como instalar |
+|---|---|
+| **Android** (Chrome, Edge, Samsung Internet) | O navegador detecta automaticamente que o app é instalável e mostra um banner ou o botão **"⬇️ Instalar app"** no cabeçalho do próprio SmartCat |
+| **Desktop** (Chrome/Edge no Windows, macOS, Linux) | Ícone de instalação (⊕) na barra de endereço, ou o mesmo botão **"⬇️ Instalar app"** |
+| **iOS** (Safari) | Instalação manual: toque em **Compartilhar** (ícone de seta para cima) → **"Adicionar à Tela de Início"**. O Safari não dispara instalação automática nem exibe o botão do app — essa limitação é do próprio iOS |
+
+**Pré-requisitos técnicos** (já implementados no projeto):
+
+- `manifest.json` com ícones `192x192` e `512x512` (`purpose: "any maskable"`)
+- Ícone dedicado `apple-touch-icon.png` (180x180, opaco, sem cantos arredondados — o iOS aplica o arredondamento sozinho)
+- Service Worker (`sw.js`) registrado, com handler de `fetch` — os arquivos estáticos ficam em cache, então o app abre mesmo sem conexão (os dados dinâmicos da API continuam exigindo rede)
+- **Servir a aplicação via HTTPS** — obrigatório para instalabilidade em produção (exceto em `localhost`, que é tratado como seguro para testes)
 
 ---
 
