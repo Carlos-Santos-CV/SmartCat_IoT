@@ -24,7 +24,7 @@
         <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
         <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 
-        <link rel="stylesheet" href="/static/css/style.css?v=4">
+        <link rel="stylesheet" href="/static/css/style.css?v=5">
     </head>
     <body>
 
@@ -39,7 +39,21 @@
             <div class="navbar-actions">
                 <button id="btn-instalar-app" class="btn-notif hidden">⬇️ Instalar app</button>
                 <button id="btn-testar-notificacao" class="btn-notif hidden">🧪 Enviar teste</button>
-                <button id="btn-ativar-notificacoes" class="btn-notif">🔕 Ativar notificações</button>
+
+                <div id="notif-control" class="notif-control">
+                    <span class="notif-control-label">Notificações</span>
+                    <span id="notif-status-text" class="notif-status-text">Desativadas</span>
+                    <button
+                        id="btn-ativar-notificacoes"
+                        class="switch"
+                        type="button"
+                        role="switch"
+                        aria-checked="false"
+                        aria-label="Ativar notificações push">
+                        <span class="switch-knob"></span>
+                    </button>
+                </div>
+
                 <span id="status-badge" class="badge">Conectado</span>
             </div>
         </header>
@@ -159,7 +173,7 @@
             </div>
         </div>
 
-        <script src="/static/js/push.js?v=2"></script>
-        <script src="/static/js/app.js?v=5"></script>
+        <script src="/static/js/push.js?v=3"></script>
+        <script src="/static/js/app.js?v=6"></script>
     </body>
 </html>

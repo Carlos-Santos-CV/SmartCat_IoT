@@ -3,7 +3,7 @@ from datetime import date, datetime
 from typing import List, Optional
 from dotenv import load_dotenv
 from fastapi import Depends, FastAPI, HTTPException
-from fastapi.responses import HTMLResponse
+from fastapi.responses import FileResponse, HTMLResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
@@ -41,6 +41,18 @@ def read_index():
         with open(index_path, "r", encoding="utf-8") as f:
             return f.read()
     return "<h1>SmartCat API Online! (Arquivo index.html não encontrado)</h1>"
+
+
+# --- Service Worker servido na RAIZ ---
+# Precisa estar em "/" (não em "/static/sw.js") para poder controlar
+# a página inteira do app. Um Service Worker só controla páginas dentro
+# do seu próprio caminho ou abaixo dele — em /static/ ele nunca
+# controlaria a página principal, e navigator.serviceWorker.ready
+# ficaria esperando para sempre (era por isso que o toggle travava).
+@app.get("/sw.js")
+def service_worker():
+    sw_path = os.path.join(STATIC_DIR, "sw.js")
+    return FileResponse(sw_path, media_type="application/javascript")
 
 
 # --- Schemas de Validação (Pydantic) ---

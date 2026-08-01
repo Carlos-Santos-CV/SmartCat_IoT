@@ -1,9 +1,9 @@
 // ======================================================
 // 🔔 SmartCat — Notificações Web Push
 // ======================================================
-// Responsável por: pedir permissão ao usuário, inscrever o navegador
-// no Push Service usando a chave pública VAPID do servidor, e enviar
-// essa inscrição para o backend salvar (POST /api/push/subscribe).
+// Responsável por: pedir permissão ao usuário, inscrever/desinscrever o
+// navegador no Push Service usando a chave pública VAPID do servidor, e
+// manter o toggle switch sincronizado com o estado real da inscrição.
 
 // Converte a chave pública VAPID (base64url) para o formato Uint8Array
 // exigido pela PushManager.subscribe().
@@ -18,12 +18,16 @@ function urlBase64ToUint8Array(base64String) {
   return outputArray;
 }
 
-// Verifica se o navegador já está inscrito e atualiza o texto do botão.
+// Sincroniza a aparência do toggle (posição do switch + texto) com o
+// estado real de inscrição do navegador.
 async function atualizarStatusNotificacoes() {
+  const controle = document.getElementById('notif-control');
   const btn = document.getElementById('btn-ativar-notificacoes');
+  const textoStatus = document.getElementById('notif-status-text');
   const btnTeste = document.getElementById('btn-testar-notificacao');
+
   if (!btn || !('serviceWorker' in navigator) || !('PushManager' in window)) {
-    if (btn) btn.style.display = 'none';
+    if (controle) controle.classList.add('hidden');
     if (btnTeste) btnTeste.classList.add('hidden');
     return;
   }
@@ -31,11 +35,87 @@ async function atualizarStatusNotificacoes() {
   try {
     const reg = await navigator.serviceWorker.ready;
     const sub = await reg.pushManager.getSubscription();
-    btn.textContent = sub ? '🔔 Notificações ativadas' : '🔕 Ativar notificações';
-    btn.classList.toggle('btn-notif-ativo', !!sub);
-    if (btnTeste) btnTeste.classList.toggle('hidden', !sub);
+    const ativo = !!sub;
+
+    btn.setAttribute('aria-checked', String(ativo));
+    btn.setAttribute('aria-label', ativo ? 'Desativar notificações push' : 'Ativar notificações push');
+
+    if (textoStatus) {
+      textoStatus.textContent = ativo ? 'Ativadas' : 'Desativadas';
+      textoStatus.classList.toggle('notif-status-text-ativo', ativo);
+    }
+
+    if (btnTeste) btnTeste.classList.toggle('hidden', !ativo);
   } catch (err) {
     console.error('[PUSH] Erro ao checar inscrição:', err);
+  }
+}
+
+// Liga/desliga as notificações — o mesmo botão faz os dois sentidos,
+// dependendo do estado atual da inscrição.
+async function alternarNotificacoesPush() {
+  const btn = document.getElementById('btn-ativar-notificacoes');
+
+  if (!('serviceWorker' in navigator) || !('PushManager' in window)) {
+    alert('Seu navegador não tem suporte a notificações push.');
+    return;
+  }
+
+  if (btn) btn.disabled = true;
+
+  try {
+    const reg = await navigator.serviceWorker.ready;
+    let sub = await reg.pushManager.getSubscription();
+
+    if (sub) {
+      // --- Já está ativo: desliga ---
+      await fetch('/api/push/unsubscribe', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(sub.toJSON()),
+      }).catch(() => {}); // mesmo se a chamada falhar, ainda desinscreve localmente
+
+      await sub.unsubscribe();
+      console.log('[PUSH] Notificações desativadas.');
+      return;
+    }
+
+    // --- Está desligado: liga ---
+    const permissao = await Notification.requestPermission();
+    if (permissao !== 'granted') {
+      alert('Permissão de notificações negada. Você não receberá alertas de saúde.');
+      return;
+    }
+
+    const resChave = await fetch('/api/push/vapid-public-key');
+    if (!resChave.ok) {
+      alert('O servidor ainda não configurou as notificações push (chave VAPID ausente).');
+      return;
+    }
+    const { publicKey } = await resChave.json();
+
+    sub = await reg.pushManager.subscribe({
+      userVisibleOnly: true,
+      applicationServerKey: urlBase64ToUint8Array(publicKey),
+    });
+
+    const resInscricao = await fetch('/api/push/subscribe', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(sub.toJSON()),
+    });
+
+    if (!resInscricao.ok) {
+      alert('Erro ao registrar inscrição de notificações no servidor.');
+    } else {
+      console.log('[PUSH] Inscrição registrada com sucesso.');
+    }
+  } catch (err) {
+    console.error('[PUSH] Erro ao alternar notificações:', err);
+    alert('Não foi possível alterar o estado das notificações push.');
+  } finally {
+    if (btn) btn.disabled = false;
+    atualizarStatusNotificacoes();
   }
 }
 
@@ -68,62 +148,12 @@ async function enviarNotificacaoTeste() {
   }
 }
 
-// Fluxo principal: pede permissão, inscreve e envia ao backend.
-async function ativarNotificacoesPush() {
-  if (!('serviceWorker' in navigator) || !('PushManager' in window)) {
-    alert('Seu navegador não tem suporte a notificações push.');
-    return;
-  }
-
-  try {
-    const permissao = await Notification.requestPermission();
-    if (permissao !== 'granted') {
-      alert('Permissão de notificações negada. Você não receberá alertas de saúde.');
-      return;
-    }
-
-    // Busca a chave pública VAPID no backend
-    const resChave = await fetch('/api/push/vapid-public-key');
-    if (!resChave.ok) {
-      alert('O servidor ainda não configurou as notificações push (chave VAPID ausente).');
-      return;
-    }
-    const { publicKey } = await resChave.json();
-
-    const reg = await navigator.serviceWorker.ready;
-
-    let sub = await reg.pushManager.getSubscription();
-    if (!sub) {
-      sub = await reg.pushManager.subscribe({
-        userVisibleOnly: true,
-        applicationServerKey: urlBase64ToUint8Array(publicKey),
-      });
-    }
-
-    const resInscricao = await fetch('/api/push/subscribe', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(sub.toJSON()),
-    });
-
-    if (resInscricao.ok) {
-      console.log('[PUSH] Inscrição registrada com sucesso.');
-      atualizarStatusNotificacoes();
-    } else {
-      alert('Erro ao registrar inscrição de notificações no servidor.');
-    }
-  } catch (err) {
-    console.error('[PUSH] Erro ao ativar notificações:', err);
-    alert('Não foi possível ativar as notificações push.');
-  }
-}
-
 document.addEventListener('DOMContentLoaded', () => {
   atualizarStatusNotificacoes();
 
   const btn = document.getElementById('btn-ativar-notificacoes');
   if (btn) {
-    btn.addEventListener('click', ativarNotificacoesPush);
+    btn.addEventListener('click', alternarNotificacoesPush);
   }
 
   const btnTeste = document.getElementById('btn-testar-notificacao');
