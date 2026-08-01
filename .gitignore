@@ -6,3 +6,4 @@ backend/app/__pycache__/
 firmware/compile commands.json
 .env
 backend/.env
+firmware/compile_commands.json
