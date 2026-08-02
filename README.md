@@ -51,7 +51,7 @@ Tutores de gatos têm dificuldade em acompanhar com precisão a rotina de seus p
 O sistema é dividido em três camadas fracamente acopladas, comunicando-se por MQTT (hardware → servidor) e HTTP/REST (servidor ↔ PWA).
 
 ```mermaid
-flowchart LR
+flowchart TD
     subgraph HW["📡 Camada de Hardware (Estações IoT)"]
         RFID["Leitor RFID<br/>(MFRC522)"]
         SENS["Sensor de Peso<br/>(joystick / potenciômetro simula célula de carga)"]
@@ -78,6 +78,7 @@ flowchart LR
         UI["Dashboard Web<br/>(HTML/CSS/JS + Service Worker)"]
     end
 
+    %% Conexões verticais
     ESP -- "publish smartcat/estacao_comida/telemetria<br/>publish smartcat/caixa_areia/telemetria" --> BROKER
     BROKER -- "subscribe smartcat/+/telemetria" --> WORKER
     UI -- "HTTP/REST (fetch)" --> API
