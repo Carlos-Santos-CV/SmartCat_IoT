@@ -5,7 +5,7 @@ from datetime import datetime, timedelta
 from apscheduler.schedulers.background import BackgroundScheduler
 from dotenv import load_dotenv
 import paho.mqtt.client as mqtt
-from app.database import Alerta, Gato, Refeicao, SessionLocal, UsoCaixa
+from app.database import Alerta, Estacao, Gato, Refeicao, SessionLocal, UsoCaixa
 from app.push_service import enviar_push_para_todos
 
 load_dotenv()
@@ -68,11 +68,17 @@ def on_message(client, userdata, msg):
         gato_id = gato.id if gato else None
         nome_gato = gato.nome if gato else f"Tag Desconhecida ({tag_recebida})"
 
+        # 1b. Identifica a estação pelo MAC address recebido no payload
+        mac_recebido = payload.get("estacao_id")
+        estacao = db.query(Estacao).filter(Estacao.mac_address == mac_recebido).first()
+        estacao_id = estacao.id if estacao else None
+
         # 2. Evento da Estação de Comida
         if "estacao_comida" in msg.topic:
             evento = Refeicao(
                 gato_id=gato_id,
-                estacao_id=payload.get("estacao_id"),
+                estacao_id=estacao_id,
+                estacao_mac=mac_recebido,
                 gato_tag=tag_recebida,
                 consumo_g=payload.get("consumo_g"),
             )
@@ -89,7 +95,8 @@ def on_message(client, userdata, msg):
 
             evento = UsoCaixa(
                 gato_id=gato_id,
-                estacao_id=payload.get("estacao_id"),
+                estacao_id=estacao_id,
+                estacao_mac=mac_recebido,
                 gato_tag=tag_recebida,
                 duracao_visita_s=duracao,
                 alerta_retencao=gerar_alerta
