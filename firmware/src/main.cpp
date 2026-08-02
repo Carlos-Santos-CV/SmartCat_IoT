@@ -10,6 +10,8 @@
 namespace NetworkConfig {
 constexpr const char *SSID_WIFI = "Wokwi-GUEST";
 constexpr const char *SENHA_WIFI = "";
+// constexpr const char *SSID_WIFI = "Carlos Santos";
+// constexpr const char *SENHA_WIFI = "brasileiro2024";
 constexpr const char *BROKER_MQTT = "broker.hivemq.com";
 constexpr int PORTA_MQTT = 1883;
 constexpr const char *TOPICO_COMIDA = "smartcat/estacao_comida/telemetria";
