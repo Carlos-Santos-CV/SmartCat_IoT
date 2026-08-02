@@ -175,7 +175,7 @@ def verificar_jejum_todos_gatos():
 
 
 def start_worker():
-    client = mqtt.Client()
+    client = mqtt.Client(mqtt.CallbackAPIVersion.VERSION2)
     client.on_message = on_message
 
     print(f"[WORKER] Conectando ao Broker MQTT: {BROKER}:{PORT}...")
