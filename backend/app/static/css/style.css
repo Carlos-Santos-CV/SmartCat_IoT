@@ -52,7 +52,12 @@
   }
 }
 
+html {
+  overflow-x: hidden;
+}
+
 body {
+  overflow-x: hidden;
   background-color: var(--bg);
   background-image:
     radial-gradient(ellipse 800px 460px at 10% -12%, rgba(200, 137, 26, 0.05), transparent 60%),
@@ -80,8 +85,11 @@ h1, h2, h3 {
   -webkit-backdrop-filter: blur(20px) saturate(1.6);
   padding: 0.85rem 1.25rem;
   display: flex;
+  flex-wrap: wrap;
   justify-content: space-between;
   align-items: center;
+  row-gap: 0.6rem;
+  column-gap: 0.75rem;
   border-bottom: 1px solid var(--hairline);
   position: sticky;
   top: 0;
@@ -109,8 +117,27 @@ h1, h2, h3 {
 
 .navbar-actions {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   gap: 0.55rem;
+}
+
+/* ======================================================
+   Mobile — cabeçalho compacto
+   Em telas estreitas o cluster de ações (botões + toggle +
+   badge) não cabe ao lado do título; em vez de forçar um
+   scroll horizontal na página inteira, ele quebra para uma
+   segunda linha, ocupando a largura total.
+   ====================================================== */
+@media (max-width: 480px) {
+  .navbar {
+    padding: 0.75rem 1rem;
+  }
+
+  .navbar-actions {
+    flex-basis: 100%;
+    justify-content: flex-end;
+  }
 }
 
 /* Badge de status — "respiração" no lugar de um ponto verde estático */
