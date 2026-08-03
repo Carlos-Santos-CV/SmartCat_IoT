@@ -79,5 +79,4 @@ dist/
 .Trashes
 ehthumbs.db
 Thumbs.db
-```
 firmware/compile_commands.json

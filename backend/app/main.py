@@ -281,14 +281,15 @@ class PushSubscriptionCreate(BaseModel):
 
 @app.get("/api/push/vapid-public-key")
 def obter_chave_publica_vapid():
-    """Fornece a chave pública VAPID para o frontend registrar a inscrição push."""
+    """Fornece a chave pública VAPID para o frontend registrar a inscrição push.
+    A chave é retornada exatamente como está no .env (formato base64url),
+    pois o frontend fará a conversão para Uint8Array."""
     if not VAPID_PUBLIC_KEY:
         raise HTTPException(
             status_code=503,
             detail="Notificações push não configuradas no servidor (VAPID_PUBLIC_KEY ausente).",
         )
-    public_key_base64 = vapid_key_to_base64(VAPID_PUBLIC_KEY)
-    return {"publicKey": public_key_base64}
+    return {"publicKey": VAPID_PUBLIC_KEY}
 
 
 @app.post("/api/push/subscribe")
@@ -351,10 +352,3 @@ def enviar_notificacao_teste(db: Session = Depends(get_db)):
         "message": f"Notificação de teste enviada para {resultado['enviadas']} dispositivo(s).",
         **resultado,
     }
-
-def vapid_key_to_base64(key: str) -> str:
-    """Converte Base64URL para Base64 padrão"""
-    if '+' in key or '/' in key or '=' in key:
-        return key  # Já está em base64 padrão
-    padding = '=' * ((4 - len(key) % 4) % 4)
-    return key.replace('-', '+').replace('_', '/') + padding
