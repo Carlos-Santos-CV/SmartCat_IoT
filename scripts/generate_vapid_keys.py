@@ -20,7 +20,7 @@ from cryptography.hazmat.primitives import serialization
 
 def urlsafe_base64_encode(data: bytes) -> str:
     """Codifica bytes para base64 URL-safe (padrão VAPID)."""
-    return base64.urlsafe_b64encode(data).rstrip(b'=').decode('ascii')
+    return base64.urlsafe_b64encode(data).rstrip(b'=').decode('utf-8')
 
 
 def main():
@@ -32,12 +32,15 @@ def main():
     # Gera par de chaves elliptic curve (P-256)
     private_key = ec.generate_private_key(ec.SECP256R1(), default_backend())
     public_key = private_key.public_key()
-    
+
     # Serializa chaves no formato VAPID (raw bytes, base64 URL-safe)
     private_bytes = private_key.private_numbers().private_value.to_bytes(32, byteorder='big')
-    public_point = public_key.public_numbers().x.to_bytes(32, byteorder='big') + \
+
+    # Formato raw P-256: 0x04 + X (32 bytes) + Y (32 bytes) = 65 bytes total
+    public_point = b'\x04' + \
+                   public_key.public_numbers().x.to_bytes(32, byteorder='big') + \
                    public_key.public_numbers().y.to_bytes(32, byteorder='big')
-    
+
     vapid_private_key = urlsafe_base64_encode(private_bytes)
     vapid_public_key = urlsafe_base64_encode(public_point)
     
