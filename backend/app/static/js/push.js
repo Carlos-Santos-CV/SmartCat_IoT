@@ -10,10 +10,9 @@
 function urlBase64ToUint8Array(base64String) {
   const cleanKey = base64String.trim().replace(/\s+/g, '');
   const binaryString = window.atob(cleanKey);
-  const rawData = window.atob(base64);
-  const outputArray = new Uint8Array(rawData.length);
-  for (let i = 0; i < rawData.length; i++) {
-    outputArray[i] = rawData.charCodeAt(i);
+  const outputArray = new Uint8Array(binaryString.length);
+  for (let i = 0; i < binaryString.length; i++) {
+    outputArray[i] = binaryString.charCodeAt(i);
   }
   return outputArray;
 }

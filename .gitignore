@@ -1,6 +1,9 @@
 # Compiled and build artifacts
+*.pyc
+__pycache__/
 *.o
 *.obj
+*.class
 *.exe
 *.dll
 *.so
@@ -8,32 +11,32 @@
 *.out
 
 # Dependencies
-venv/
 .venv/
-__pycache__/
-.mypy_cache/
-.pytest_cache/
+venv/
 node_modules/
-
-# Build directories
-build/
 dist/
+build/
 target/
 .gradle/
+.mypy_cache/
+.pytest_cache/
 
 # Logs and temp files
 *.log
 *.tmp
 *.swp
+*.swo
 
 # Environment
 .env
 .env.local
-*.env.*
+.env.*
 
 # Editors
 .vscode/
 .idea/
+*.swp
+*.swo
 
 # System files
 .DS_Store
@@ -67,6 +70,3 @@ htmlcov/
 *.tar.bz2
 *.tar.xz
 *.tar.zst
-```
-firmware/.cache/
-firmware/compile_commands.json
