@@ -116,7 +116,14 @@ void setup() {
   rfid.PCD_Init();
 
   client.setServer(NetworkConfig::BROKER_MQTT, NetworkConfig::PORTA_MQTT);
+  
   Serial.println("\n=== SmartCat ESP32-S3 Inicializado (ID Dinâmico via MAC) ===");
+  Serial.print("[Config] Broker MQTT: ");
+  Serial.print(NetworkConfig::BROKER_MQTT);
+  Serial.print(":");
+  Serial.println(NetworkConfig::PORTA_MQTT);
+  Serial.print("[Config] WiFi SSID: ");
+  Serial.println(NetworkConfig::SSID_WIFI);
 }
 
 void loop() {
