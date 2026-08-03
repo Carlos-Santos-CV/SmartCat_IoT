@@ -1,0 +1,24 @@
+# ===========================================
+# PlatformIO - Configurações LOCAIS (NÃO VERSIONAR)
+# ===========================================
+# Este arquivo é para credenciais REAIS do seu hardware físico.
+# O platformio.ini principal tem valores de exemplo/simulador.
+#
+# Como usar:
+# 1. Copie este arquivo para platformio.local.ini
+# 2. Edite com suas credenciais reais
+# 3. Este arquivo NÃO deve ser commitado no Git
+#
+# PlatformIO automaticamente lê platformio.local.ini se existir
+# e sobrepõe as configurações do platformio.ini
+
+[env:prod]
+extends = env:esp32-s3-devkitc-1
+build_flags = 
+    # Substitua pelas credenciais da SUA rede WiFi
+    -D WIFI_SSID="NomeDaSuaRedeWiFi"
+    -D WIFI_PASSWORD="SuaSenhaWiFi"
+    
+    # Broker MQTT (pode ser o mesmo do dev ou um local)
+    -D MQTT_BROKER="broker.hivemq.com"
+    -D MQTT_PORT=1883

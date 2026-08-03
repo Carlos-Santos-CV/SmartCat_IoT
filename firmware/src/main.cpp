@@ -8,12 +8,30 @@
 /** Configuration Constants **/
 
 namespace NetworkConfig {
-constexpr const char *SSID_WIFI = "Wokwi-GUEST";
-constexpr const char *SENHA_WIFI = "";
-// constexpr const char *SSID_WIFI = "Carlos Santos";
-// constexpr const char *SENHA_WIFI = "brasileiro2024";
-constexpr const char *BROKER_MQTT = "broker.hivemq.com";
-constexpr int PORTA_MQTT = 1883;
+// SSID e senha do WiFi - definidos via build_flags do PlatformIO
+// Dev: -D WIFI_SSID="Wokwi-GUEST" -D WIFI_PASSWORD=""
+// Prod: -D WIFI_SSID="SUA_REDE" -D WIFI_PASSWORD="SUA_SENHA"
+#ifndef WIFI_SSID
+#define WIFI_SSID "Wokwi-GUEST"  // Fallback se não definido
+#endif
+
+#ifndef WIFI_PASSWORD
+#define WIFI_PASSWORD ""
+#endif
+
+#ifndef MQTT_BROKER
+#define MQTT_BROKER "broker.hivemq.com"
+#endif
+
+#ifndef MQTT_PORT
+#define MQTT_PORT 1883
+#endif
+
+constexpr const char *SSID_WIFI = WIFI_SSID;
+constexpr const char *SENHA_WIFI = WIFI_PASSWORD;
+constexpr const char *BROKER_MQTT = MQTT_BROKER;
+constexpr int PORTA_MQTT = MQTT_PORT;
+
 constexpr const char *TOPICO_COMIDA = "smartcat/estacao_comida/telemetria";
 constexpr const char *TOPICO_CAIXA = "smartcat/caixa_areia/telemetria";
 } // namespace NetworkConfig
