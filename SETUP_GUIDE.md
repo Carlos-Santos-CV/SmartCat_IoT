@@ -11,9 +11,10 @@
 ### 2. Arquivos de Configuração (.env)
 | Arquivo | Finalidade |
 |---------|-----------|
-| `backend/.env` | **PRONTO PARA USO** - já vem com chaves VAPID geradas |
+| `backend/.env` | **PRONTO PARA USO** - já vem com chaves VAPID geradas. Usado em dev e prod (via `env_file:` no docker-compose.yml) |
 | `backend/.env.dev` | Template para desenvolvimento |
-| `deploy/.env.prod` | Template para deploy na GCP VM |
+| `.env` (raiz do projeto) | Só o que o Compose precisa pra subir o Postgres (`POSTGRES_USER/PASSWORD/DB`). Lido automaticamente, sem `--env-file` |
+| `.env.example` (raiz do projeto) | Template do arquivo acima |
 | `.env.overview` | Visão geral das diferenças entre ambientes |
 
 ### 3. Firmware sem Hardcoded
@@ -81,17 +82,21 @@ cd smartcat
 
 ### 2. Configurar ambiente
 ```bash
-# Copiar template de produção
-cp deploy/.env.prod deploy/.env
+# Credenciais do Postgres (o Compose lê ".env" na raiz sozinho, sem flag)
+cp .env.example .env
+nano .env
+chmod 600 .env
 
-# Editar com as MESMAS chaves VAPID do desenvolvimento
-nano deploy/.env
+# Config da aplicação (VAPID, MQTT, etc.) — as MESMAS chaves VAPID do desenvolvimento
+cp backend/.env.example backend/.env
+nano backend/.env
 ```
 
 ### 3. Subir serviços
 ```bash
 docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d --build
 ```
+(sem `--env-file`: o Compose já carrega `./.env` da raiz automaticamente)
 
 ### 4. Firmware no ESP32 Físico
 
@@ -180,7 +185,8 @@ pio run --target clean
    - Veja eventos chegando em `http://localhost:8000`
 
 3. **Preparar deploy**:
-   - Copie chaves VAPID para `deploy/.env.prod`
+   - Copie as MESMAS chaves VAPID de `backend/.env` para o `backend/.env` da VM
+   - Configure `.env` na raiz da VM com uma senha forte de Postgres (veja `.env.example`)
    - Configure `platformio.local.ini` com WiFi da rede de demonstração
 
 ---

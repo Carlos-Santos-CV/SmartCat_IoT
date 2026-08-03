@@ -1,5 +1,12 @@
 # Carregado EXPLICITAMENTE em produção:
-#   docker compose -f docker-compose.yml -f docker-compose.prod.yml --env-file deploy/.env.prod up -d --build
+#   docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d --build
+#
+# Sem --env-file: o Compose já lê o arquivo ".env" na raiz do projeto
+# automaticamente (POSTGRES_USER/POSTGRES_PASSWORD/POSTGRES_DB). Veja
+# ".env.example" na raiz para o template. As chaves VAPID e demais
+# configs da aplicação NÃO ficam aqui — ficam só em backend/.env
+# (lido via env_file: no docker-compose.yml), pra evitar que o mesmo
+# valor fique declarado em dois lugares e diverja silenciosamente.
 #
 # Não redefine nada do docker-compose.yml (web/db já nascem sem porta publicada
 # e sem bind-mount na base) — só ADICIONA o serviço do Caddy, que não existe

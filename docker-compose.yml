@@ -46,7 +46,7 @@ services:
     environment:
       # VAPID_PUBLIC_KEY / VAPID_PRIVATE_KEY foram removidas daqui de propósito:
       # esses valores já vêm do env_file acima (backend/.env). Tê-las também
-      # aqui, resolvidas via ${...} do deploy/.env.prod, causava divergência
+      # aqui, resolvidas via ${...} do ".env" da raiz, causava divergência
       # silenciosa entre o que estava em backend/.env e o que o container
       # realmente recebia (environment: sempre vence sobre env_file:).
       - DATABASE_URL=postgresql://${POSTGRES_USER:-smartcat_user}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB:-smartcat_db}
