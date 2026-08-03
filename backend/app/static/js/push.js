@@ -9,7 +9,13 @@
 // exigido pela PushManager.subscribe().
 function urlBase64ToUint8Array(base64String) {
   const cleanKey = base64String.trim().replace(/\s+/g, '');
-  const binaryString = window.atob(cleanKey);
+  // Converte de base64url para base64 padrão
+  let base64 = cleanKey.replace(/-/g, '+').replace(/_/g, '/');
+  // Adiciona padding se necessário
+  while (base64.length % 4) {
+    base64 += '=';
+  }
+  const binaryString = window.atob(base64);
   const outputArray = new Uint8Array(binaryString.length);
   for (let i = 0; i < binaryString.length; i++) {
     outputArray[i] = binaryString.charCodeAt(i);
