@@ -1,5 +1,6 @@
 import json
 import os
+import ssl
 import time
 from datetime import datetime, timedelta
 from apscheduler.schedulers.background import BackgroundScheduler
@@ -12,6 +13,12 @@ load_dotenv()
 
 BROKER = os.getenv("MQTT_BROKER", "broker.hivemq.com")
 PORT = int(os.getenv("MQTT_PORT", 1883))
+# Ative com MQTT_TLS=1 no .env quando o broker estiver atrás do
+# listener TLS (porta 443) — necessário para sair do cPanel, que só
+# libera saída na 443. Certificado autoassinado, por isso a validação
+# da cadeia fica desligada (cert_reqs=CERT_NONE); suficiente para o
+# escopo acadêmico deste projeto.
+MQTT_TLS = os.getenv("MQTT_TLS", "0") == "1"
 
 # Janela de deduplicação: não repete o mesmo tipo de alerta para o mesmo
 # gato se já existe um alerta em aberto (não resolvido) gerado dentro desse intervalo.
@@ -178,7 +185,11 @@ def start_worker():
     client = mqtt.Client(mqtt.CallbackAPIVersion.VERSION2)
     client.on_message = on_message
 
-    print(f"[WORKER] Conectando ao Broker MQTT: {BROKER}:{PORT}...")
+    if MQTT_TLS:
+        client.tls_set(cert_reqs=ssl.CERT_NONE)
+        client.tls_insecure_set(True)
+
+    print(f"[WORKER] Conectando ao Broker MQTT: {BROKER}:{PORT} (TLS={MQTT_TLS})...")
     try:
         client.connect(BROKER, PORT, 60)
         client.subscribe("smartcat/+/telemetria")
