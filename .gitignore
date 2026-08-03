@@ -1,8 +1,5 @@
-```
-# Environment variables
-.env
-.env.local
-.env.*
+# Dependencies
+node_modules/
 
 # Python
 __pycache__/
@@ -23,14 +20,63 @@ nosetests.xml
 coverage.xml
 *.cover
 *.log
-*.tmp
-*.swp
+*.pot
+*.po
+*~
+.pytest_cache/
+.mypy_cache/
+.hypothesis/
+.eggs/
+eggs/
+parts/
+var/
+sdist/
+develop-eggs/
+.installed.cfg
+lib/
+lib64/
+*.egg-info/
+.installed.cfg
+*.egg
+.venv.bak/
+venv.bak/
+env.bak/
 
-# IDE
+# Build artifacts
+build/
+dist/
+*.egg-info/
+*.so
+*.dylib
+*.dll
+*.exe
+*.o
+*.obj
+*.a
+*.lib
+*.out
+
+# Logs
+*.log
+*.tmp
+
+# Environment variables
+.env
+.env.local
+.env.*
+
+# Editors
 .vscode/
 .idea/
+*.swp
+*.swo
 
-# OS
+# OS generated files
 .DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
 Thumbs.db
-```
+firmware/compile_commands.json
