@@ -1,0 +1,14 @@
+# Troque "seu-dominio.com" pelo domínio que você apontou (registro A) para o
+# IP externo da VM. O Caddy detecta que é um domínio público e emite/renova
+# o certificado Let's Encrypt sozinho — não precisa configurar nada manual.
+seu-dominio.com {
+    reverse_proxy web:8000
+
+    encode gzip
+
+    header {
+        Strict-Transport-Security "max-age=31536000; includeSubDomains"
+        X-Content-Type-Options "nosniff"
+        X-Frame-Options "SAMEORIGIN"
+    }
+}

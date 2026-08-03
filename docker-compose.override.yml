@@ -1,0 +1,18 @@
+# Carregado AUTOMATICAMENTE pelo `docker compose up` quando este arquivo
+# está na mesma pasta do docker-compose.yml — não precisa de -f.
+# Só use isso em máquina de desenvolvimento (não faz sentido em prod).
+services:
+  db:
+    ports:
+      - "5432:5432"   # acesso direto ao Postgres (psql, DBeaver etc.) durante o dev
+
+  web:
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+    volumes:
+      - ./backend:/app   # hot-reload: edita local, reflete no container
+    ports:
+      - "8000:8000"      # acesso direto sem precisar do Caddy
+
+  worker:
+    volumes:
+      - ./backend:/app

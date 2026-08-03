@@ -1,0 +1,27 @@
+# Carregado EXPLICITAMENTE em produção:
+#   docker compose -f docker-compose.yml -f docker-compose.prod.yml --env-file deploy/.env.prod up -d --build
+#
+# Não redefine nada do docker-compose.yml (web/db já nascem sem porta publicada
+# e sem bind-mount na base) — só ADICIONA o serviço do Caddy, que não existe
+# nem na base nem no override de dev.
+services:
+  caddy:
+    image: caddy:2-alpine
+    container_name: smartcat_caddy
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+      - "443:443/udp"   # HTTP/3
+    volumes:
+      - ./deploy/Caddyfile:/etc/caddy/Caddyfile
+      - caddy_data:/data
+      - caddy_config:/config
+    networks:
+      - smartcat_net
+    depends_on:
+      - web
+
+volumes:
+  caddy_data:
+  caddy_config:
