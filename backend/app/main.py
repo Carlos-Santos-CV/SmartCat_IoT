@@ -287,7 +287,8 @@ def obter_chave_publica_vapid():
             status_code=503,
             detail="Notificações push não configuradas no servidor (VAPID_PUBLIC_KEY ausente).",
         )
-    return {"publicKey": VAPID_PUBLIC_KEY}
+    public_key_base64 = vapid_key_to_base64(VAPID_PUBLIC_KEY)
+    return {"publicKey": public_key_base64}
 
 
 @app.post("/api/push/subscribe")
@@ -350,3 +351,10 @@ def enviar_notificacao_teste(db: Session = Depends(get_db)):
         "message": f"Notificação de teste enviada para {resultado['enviadas']} dispositivo(s).",
         **resultado,
     }
+
+def vapid_key_to_base64(key: str) -> str:
+    """Converte Base64URL para Base64 padrão"""
+    if '+' in key or '/' in key or '=' in key:
+        return key  # Já está em base64 padrão
+    padding = '=' * ((4 - len(key) % 4) % 4)
+    return key.replace('-', '+').replace('_', '/') + padding
