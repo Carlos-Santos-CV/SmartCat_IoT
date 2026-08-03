@@ -72,3 +72,5 @@ htmlcov/
 *.tar.xz
 *.tar.zst
 ```
+firmware/.cache/
+firmware/compile_commands.json
