@@ -41,10 +41,10 @@ services:
     restart: unless-stopped
     # Comando padrão = produção (sem --reload). O override de dev troca isso.
     command: uvicorn app.main:app --host 0.0.0.0 --port 8000
+    env_file:
+      - ./backend/.env
     environment:
       - DATABASE_URL=postgresql://${POSTGRES_USER:-smartcat_user}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB:-smartcat_db}
-      - MQTT_BROKER=broker
-      - MQTT_PORT=1883
       - VAPID_PUBLIC_KEY=${VAPID_PUBLIC_KEY}
       - VAPID_PRIVATE_KEY=${VAPID_PRIVATE_KEY}
       - VAPID_CLAIM_EMAIL=${VAPID_CLAIM_EMAIL:-mailto:contato@smartcat.local}
@@ -66,10 +66,10 @@ services:
     container_name: smartcat_worker
     restart: unless-stopped
     command: python -m app.worker
+    env_file:
+      - ./backend/.env
     environment:
       - DATABASE_URL=postgresql://${POSTGRES_USER:-smartcat_user}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB:-smartcat_db}
-      - MQTT_BROKER=broker
-      - MQTT_PORT=1883
       - VAPID_PUBLIC_KEY=${VAPID_PUBLIC_KEY}
       - VAPID_PRIVATE_KEY=${VAPID_PRIVATE_KEY}
       - VAPID_CLAIM_EMAIL=${VAPID_CLAIM_EMAIL:-mailto:contato@smartcat.local}
