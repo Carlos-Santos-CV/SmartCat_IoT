@@ -20,10 +20,12 @@ Sistema integrado de **Internet das Coisas (IoT)** para monitoramento remoto de 
 - [Notificações Web Push](#-notificações-web-push)
 - [Instalação em Dispositivos Móveis](#-instalação-em-dispositivos-móveis)
 - [Como Executar](#-como-executar)
-  - [Opção A — Docker Compose (recomendado)](#opção-a--docker-compose-recomendado)
-  - [Opção B — Execução manual (dev)](#opção-b--execução-manual-dev)
+  - [Ambiente de Desenvolvimento (Local)](#-ambiente-de-desenvolvimento-local)
+  - [Ambiente de Deploy (Produção / VM)](#-ambiente-de-deploy-produção--vm)
+  - [Execução Manual (Alternativa)](#-execução-manual-alternativa-sem-docker)
   - [Firmware (ESP32 / Wokwi)](#firmware-esp32--wokwi)
 - [Variáveis de Ambiente](#-variáveis-de-ambiente)
+- [Portabilidade e Requisitos de Infraestrutura](#-portabilidade-e-requisitos-de-infraestrutura)
 - [Roadmap](#-roadmap)
 - [Licença](#-licença)
 
@@ -373,23 +375,218 @@ O SmartCat é um PWA instalável — funciona em tela cheia, como um app nativo,
 
 ## 🚀 Como Executar
 
-### Opção A — Docker Compose (recomendado)
+O SmartCat foi projetado para rodar em **dois ambientes principais**: Desenvolvimento (local) e Deploy (produção/VM). O sistema é **agnóstico à infraestrutura** — qualquer ambiente com Docker e/ou PlatformIO funciona.
 
-Sobe banco de dados (Postgres), broker MQTT (Mosquitto) e a API/worker de uma vez.
+---
+
+### 🧑‍💻 Ambiente de Desenvolvimento (Local)
+
+Ideal para testar, desenvolver e validar a lógica antes de ir para produção. Use o **simulador Wokwi** (sem hardware físico) ou o ESP32 conectado ao seu computador.
+
+#### Pré-requisitos
+
+- Docker & Docker Compose instalados
+- Python 3.10+ (para scripts auxiliares)
+- PlatformIO Core (opcional, se for compilar firmware fora do Wokwi)
+- Extensão Wokwi no VS Code/VSCodium (opcional, para simulação)
+
+#### Passo 1: Gerar Chaves VAPID (Notificações Push)
 
 ```bash
-cd docker
-cp .env.example .env        # preencha as chaves VAPID (opcional, mas recomendado)
+cd /workspace
+python scripts/generate_vapid_keys.py
+# Copie as chaves geradas
+```
+
+#### Passo 2: Configurar Variáveis de Ambiente
+
+Crie o arquivo `backend/.env`:
+
+```bash
+cp backend/.env.example backend/.env
+```
+
+Edite `backend/.env` com as chaves VAPID geradas:
+
+```ini
+DATABASE_URL=sqlite:///./smartcat.db
+MQTT_BROKER=broker.hivemq.com
+MQTT_PORT=1883
+VAPID_PUBLIC_KEY=<cole_aqui>
+VAPID_PRIVATE_KEY=<cole_aqui>
+VAPID_CLAIM_EMAIL=mailto:dev@smartcat.local
+```
+
+#### Passo 3: Subir Serviços com Docker Compose
+
+Na raiz do projeto:
+
+```bash
 docker compose up --build
 ```
 
-- Dashboard: [http://localhost:8000](http://localhost:8000)
-- Documentação da API: [http://localhost:8000/docs](http://localhost:8000/docs)
-- Broker MQTT local: `localhost:1883`
+Serviços disponíveis:
+- **Dashboard**: [http://localhost:8000](http://localhost:8000)
+- **API Docs**: [http://localhost:8000/docs](http://localhost:8000/docs)
+- **Worker MQTT**: logs via `docker compose logs -f worker`
 
-> ⚠️ Por padrão, o `docker-compose.yaml` aponta `MQTT_BROKER=broker.hivemq.com` (broker público) em vez do broker Mosquitto local que ele mesmo sobe — ajuste essa variável para `broker` se quiser usar o Mosquitto do próprio Compose (rede interna do Docker).
+> 💡 O ambiente de desenvolvimento usa **SQLite** por padrão (sem necessidade de subir PostgreSQL) e conecta ao broker público `broker.hivemq.com` (não precisa subir Mosquitto local).
 
-### Opção B — Execução manual (dev)
+#### Passo 4: Rodar o Firmware (Simulado ou Físico)
+
+**Opção A — Simulador Wokwi (Recomendado para Dev):**
+
+1. Abra a pasta `firmware/` no VS Code com a extensão Wokwi instalada
+2. Selecione o environment `dev` na barra inferior do PlatformIO
+3. Pressione `F1` → "Wokwi: Start Simulator"
+4. O simulador conecta automaticamente a `broker.hivemq.com`
+
+**Opção B — Hardware Físico (ESP32 conectado via USB):**
+
+```bash
+cd firmware
+pio run -e dev --target upload
+pio device monitor -e dev -b 115200
+```
+
+---
+
+### ☁️ Ambiente de Deploy (Produção / VM)
+
+Projeto para rodar em servidores cloud (ex: Google Cloud VM, AWS EC2, Azure VM) ou qualquer máquina com Docker. O exemplo abaixo usa **Google Cloud Platform (GCP)**, mas o processo é idêntico em outros provedores.
+
+#### Pré-requisitos
+
+- VM Linux (Ubuntu 22.04+, Debian 11+) com Docker e Docker Compose instalados
+- Acesso SSH à VM
+- Firewall liberado nas portas:
+  - **80** (HTTP) e **443** (HTTPS) para acesso web
+  - **1883** (MQTT) para comunicação com ESP32
+- ESP32-S3 físico com firmware compilado para produção
+
+#### Passo 1: Clonar o Repositório na VM
+
+```bash
+git clone https://github.com/seu-usuario/SmartCat_IoT.git ~/smartcat
+cd ~/smartcat
+```
+
+#### Passo 2: Configurar Variáveis de Ambiente de Produção
+
+Crie o arquivo `.env` na **raiz do projeto** (necessário para o Docker Compose ler):
+
+```bash
+cat > .env << 'EOF'
+# Banco de Dados PostgreSQL
+POSTGRES_USER=smartcat
+POSTGRES_PASSWORD=senha_forte_aleatoria
+POSTGRES_DB=smartcat_db
+
+# URL de conexão usada pela aplicação
+DATABASE_URL=postgresql://smartcat:senha_forte_aleatoria@db:5432/smartcat_db
+
+# Broker MQTT (serviço local na rede Docker)
+MQTT_BROKER=broker
+MQTT_PORT=1883
+
+# Web Push (USE AS MESMAS CHAVES DO DESENVOLVIMENTO)
+VAPID_PUBLIC_KEY=<mesma_chave_do_dev>
+VAPID_PRIVATE_KEY=<mesma_chave_do_dev>
+VAPID_CLAIM_EMAIL=mailto:admin@smartcat.cloud
+EOF
+```
+
+> ⚠️ **Importante:** Use as **mesmas chaves VAPID** do ambiente de desenvolvimento para não invalidar as notificações push já registradas nos navegadores dos usuários.
+
+#### Passo 3: Configurar Firewall da VM
+
+**Google Cloud Platform (GCP):**
+
+```bash
+# Liberar HTTP/HTTPS
+gcloud compute firewall-rules create allow-http \
+  --allow tcp:80,tcp:443 \
+  --source-ranges 0.0.0.0/0 \
+  --description "Acesso Web ao SmartCat"
+
+# Liberar MQTT para ESP32
+gcloud compute firewall-rules create allow-mqtt \
+  --allow tcp:1883 \
+  --source-ranges 0.0.0.0/0 \
+  --description "Acesso MQTT para ESP32"
+```
+
+**Outros provedores:** Libere as portas 80, 443 e 1883 no painel de segurança/firewall.
+
+#### Passo 4: Subir Serviços em Produção
+
+Use os arquivos de compose de produção (inclui Caddy para HTTPS automático):
+
+```bash
+docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d --build
+```
+
+Verifique o status:
+
+```bash
+docker compose ps
+# Deve mostrar: web, worker, db, broker, caddy (todos saudáveis)
+```
+
+Acesse pelo IP da VM ou domínio configurado:
+- HTTP: `http://<IP_DA_VM>`
+- HTTPS: `https://seu-dominio.com` (após apontar DNS e configurar Caddyfile)
+
+#### Passo 5: Compilar e Gravar Firmware no ESP32 Físico
+
+O firmware de produção deve apontar para o **IP público da VM** (ou domínio).
+
+1. **Descubra o IP externo da VM:**
+   ```bash
+   curl ifconfig.me
+   # Anote o IP, ex: 34.95.195.6
+   ```
+
+2. **Crie o arquivo de configuração local (não versionado):**
+   
+   Em `firmware/platformio.local.ini`:
+   ```ini
+   [env:prod]
+   extends = env:esp32-s3-devkitc-1
+   build_flags = 
+       ${env:esp32-s3-devkitc-1.build_flags}
+       -D WIFI_SSID=\"NOME_DA_REDE_WIFI\"
+       -D WIFI_PASSWORD=\"SENHA_DA_REDE\"
+       -D MQTT_BROKER=\"34.95.195.6\"
+       -D MQTT_PORT=1883
+   ```
+
+3. **Compile e faça upload no ESP32:**
+   ```bash
+   cd firmware
+   pio run -e prod --target upload
+   pio device monitor -e prod -b 115200
+   ```
+
+4. **Verifique a conexão no Serial Monitor:**
+   ```
+   [Wi-Fi] Conectado! Dispositivo ID: ESP32_...
+   [MQTT] Tentando conectar ao Broker...
+   [MQTT] Conectado! (ao IP da VM)
+   ```
+
+#### Passo 6: Teste Final
+
+1. Acesse o dashboard no navegador
+2. Cadastre um pet, uma estação e uma tag RFID
+3. Aproxime a tag do leitor RFID no ESP32 físico
+4. Verifique o evento aparecendo no dashboard em tempo real
+
+---
+
+### 🔧 Execução Manual (Alternativa sem Docker)
+
+Caso prefira rodar os serviços manualmente (útil para debug avançado):
 
 ```bash
 cd backend
@@ -444,17 +641,56 @@ O firmware foi desenvolvido para **ESP32-S3**, com leitor RFID **MFRC522** e um 
 
 ## ⚙️ Variáveis de Ambiente
 
-**`backend/.env`**
+### Desenvolvimento (`backend/.env`)
 
-| Variável | Descrição | Padrão |
+| Variável | Descrição | Valor Típico (Dev) |
 |---|---|---|
-| `DATABASE_URL` | String de conexão do banco (Postgres ou SQLite) | `sqlite:///./smartcat.db` |
+| `DATABASE_URL` | String de conexão do banco | `sqlite:///./smartcat.db` |
 | `MQTT_BROKER` | Endereço do broker MQTT | `broker.hivemq.com` |
 | `MQTT_PORT` | Porta do broker MQTT | `1883` |
-| `VAPID_PUBLIC_KEY` / `VAPID_PRIVATE_KEY` | Par de chaves para Web Push (gerar com `scripts/generate_vapid_keys.py`) | — |
-| `VAPID_CLAIM_EMAIL` | E-mail de contato exigido pelo padrão VAPID | `mailto:contato@smartcat.local` |
+| `VAPID_PUBLIC_KEY` | Chave pública Web Push | *(gerar com script)* |
+| `VAPID_PRIVATE_KEY` | Chave privada Web Push | *(gerar com script)* |
+| `VAPID_CLAIM_EMAIL` | E-mail de contato VAPID | `mailto:dev@smartcat.local` |
 
-**`docker/.env`** — usadas pelo `docker-compose.yaml` para repassar as chaves VAPID ao container `web` (mesmas três últimas variáveis acima).
+### Deploy / Produção (`.env` na raiz)
+
+Além das variáveis acima (com valores ajustados), o ambiente de produção requer:
+
+| Variável | Descrição | Valor Típico (Prod) |
+|---|---|---|
+| `POSTGRES_USER` | Usuário do PostgreSQL | `smartcat` |
+| `POSTGRES_PASSWORD` | Senha do PostgreSQL | *(senha forte)* |
+| `POSTGRES_DB` | Nome do banco PostgreSQL | `smartcat_db` |
+| `DATABASE_URL` | Connection string (aponta p/ serviço Docker) | `postgresql://smartcat:senha@db:5432/smartcat_db` |
+| `MQTT_BROKER` | Broker na rede Docker interna | `broker` |
+
+> 💡 **Dica:** As chaves VAPID devem ser **as mesmas** em desenvolvimento e produção para que as notificações push continuem funcionando após o deploy.
+
+---
+
+## 🌍 Portabilidade e Requisitos de Infraestrutura
+
+O SmartCat foi projetado para ser **agnóstico à infraestrutura**:
+
+| Requisito | Mínimo | Recomendado |
+|---|---|---|
+| **CPU** | 1 vCPU | 2 vCPU |
+| **RAM** | 1 GB | 2 GB |
+| **Armazenamento** | 5 GB | 10 GB SSD |
+| **Sistema Operacional** | Linux com Docker | Ubuntu 22.04 LTS / Debian 11+ |
+| **Conectividade** | Internet (para broker público) | IP estático + domínio (para HTTPS) |
+
+**Onde pode rodar:**
+- ✅ Google Cloud Platform (GCP) — VM Compute Engine
+- ✅ Amazon Web Services (AWS) — EC2
+- ✅ Microsoft Azure — Virtual Machines
+- ✅ Oracle Cloud — Free Tier
+- ✅ Servidor físico local (home lab)
+- ✅ Qualquer VPS com Docker (Hetzner, DigitalOcean, Linode, etc.)
+
+**O firmware ESP32 pode se conectar de:**
+- Qualquer rede Wi-Fi com acesso à internet
+- A partir de qualquer localização geográfica, desde que consiga reachar o IP/domínio do servidor
 
 ---
 
