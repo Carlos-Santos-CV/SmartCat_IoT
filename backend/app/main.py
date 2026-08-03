@@ -1,4 +1,5 @@
 import os
+import base64
 from datetime import date, datetime
 from typing import List, Optional
 from dotenv import load_dotenv
@@ -13,6 +14,34 @@ from app.push_service import enviar_push_para_todos
 load_dotenv()
 
 VAPID_PUBLIC_KEY = os.getenv("VAPID_PUBLIC_KEY", "")
+VAPID_PRIVATE_KEY = os.getenv("VAPID_PRIVATE_KEY", "")
+
+
+def vapid_key_to_base64(key: str) -> str:
+    """Converte uma chave VAPID do formato raw bytes (hex ou base64url) para base64 padrão.
+    
+    As chaves VAPID geradas por bibliotecas Python geralmente estão em formato:
+    - Base64URL (com - e _ em vez de + e /, sem padding)
+    - Ou raw bytes em hex
+    
+    O navegador espera base64 padrão para converter para Uint8Array.
+    """
+    if not key:
+        return ""
+    
+    # Remove espaços e quebras de linha
+    key = key.strip()
+    
+    # Se já parece base64 padrão (tem + ou / ou =), retorna como está
+    if '+' in key or '/' in key or '=' in key:
+        return key
+    
+    # É base64url: converte para base64 padrão
+    # Adiciona padding se necessário
+    padding = '=' * ((4 - len(key) % 4) % 4)
+    key = key.replace('-', '+').replace('_', '/') + padding
+    
+    return key
 
 app = FastAPI(title="SmartCat API & PWA", version="1.0.0")
 
@@ -281,13 +310,21 @@ class PushSubscriptionCreate(BaseModel):
 
 @app.get("/api/push/vapid-public-key")
 def obter_chave_publica_vapid():
-    """Fornece a chave pública VAPID para o frontend registrar a inscrição push."""
+    """Fornece a chave pública VAPID para o frontend registrar a inscrição push.
+    
+    A chave é convertida para base64 padrão, formato esperado pelo navegador
+    para conversão para Uint8Array no JavaScript.
+    """
     if not VAPID_PUBLIC_KEY:
         raise HTTPException(
             status_code=503,
             detail="Notificações push não configuradas no servidor (VAPID_PUBLIC_KEY ausente).",
         )
-    return {"publicKey": VAPID_PUBLIC_KEY}
+    
+    # Converte a chave para base64 padrão (navegador espera este formato)
+    public_key_base64 = vapid_key_to_base64(VAPID_PUBLIC_KEY)
+    
+    return {"publicKey": public_key_base64}
 
 
 @app.post("/api/push/subscribe")

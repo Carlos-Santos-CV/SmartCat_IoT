@@ -5,17 +5,25 @@
 // navegador no Push Service usando a chave pública VAPID do servidor, e
 // manter o toggle switch sincronizado com o estado real da inscrição.
 
-// Converte a chave pública VAPID (base64url) para o formato Uint8Array
+// Converte a chave pública VAPID (formato base64 padrão) para Uint8Array
 // exigido pela PushManager.subscribe().
+// A chave vem do backend em base64 padrão (+, /), precisamos converter para o formato correto.
 function urlBase64ToUint8Array(base64String) {
-  const padding = '='.repeat((4 - (base64String.length % 4)) % 4);
-  const base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/');
-  const rawData = window.atob(base64);
-  const outputArray = new Uint8Array(rawData.length);
-  for (let i = 0; i < rawData.length; i++) {
-    outputArray[i] = rawData.charCodeAt(i);
+  // Remove eventuais espaços em branco e quebras de linha
+  const cleanKey = base64String.trim().replace(/\s+/g, '');
+  
+  // Converte base64 para binary string
+  const binaryString = window.atob(cleanKey);
+  
+  // Cria o Uint8Array
+  const len = binaryString.length;
+  const bytes = new Uint8Array(len);
+  
+  for (let i = 0; i < len; i++) {
+    bytes[i] = binaryString.charCodeAt(i);
   }
-  return outputArray;
+  
+  return bytes;
 }
 
 // Sincroniza a aparência do toggle (posição do switch + texto) com o
