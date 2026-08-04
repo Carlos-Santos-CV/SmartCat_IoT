@@ -139,25 +139,32 @@ SmartCat_IoT/
 │   │   ├── push_service.py    # Lógica compartilhada de envio de Web Push (VAPID)
 │   │   ├── database.py        # Modelos SQLAlchemy (ORM) e conexão com o banco
 │   │   ├── static/
-│   │   │   └── icons/           # icon-192.png, icon-512.png, apple-touch-icon.png
+│   │   │   ├── css/             # style.css
+│   │   │   ├── js/              # app.js, push.js
+│   │   │   ├── icons/           # icon-192.png, icon-512.png, apple-touch-icon.png
+│   │   │   └── manifest.json    # Web App Manifest (PWA)
 │   │   └── templates/
 │   │       └── index.html      # Dashboard servido na rota "/"
 │   ├── passenger_wsgi.py       # Entry point para hospedagem via Passenger/cPanel
 │   ├── requirements.txt
-│   ├── Dockerfile
-│   └── .env.example
-├── docker/
-│   ├── docker-compose.yaml     # Orquestra db (Postgres) + broker (Mosquitto) + web (API)
-│   ├── mosquitto.conf
-│   └── .env.example
+│   └── Dockerfile
+├── deploy/
+│   ├── Caddyfile              # Configuração do Caddy (reverse proxy)
+│   └── mosquitto.conf         # Configuração do broker MQTT (Mosquitto)
 ├── firmware/
-│   ├── src/main.cpp            # Firmware ESP32-S3 (leitura RFID + peso + envio MQTT)
-│   ├── platformio.ini          # Dependências e board de destino
-│   ├── diagram.json            # Esquema de ligação para simulação Wokwi
-│   └── wokwi.toml
+│   ├── src/main.cpp           # Firmware ESP32-S3 (leitura RFID + peso + envio MQTT)
+│   ├── platformio.ini         # Dependências e board de destino
+│   ├── platformio.local.example  # Exemplo de configurações locais do PlatformIO
+│   ├── diagram.json           # Esquema de ligação para simulação Wokwi
+│   ├── wiring-diagram.png     # Diagrama de conexões físicas
+│   └── wokwi.toml             # Configuração da simulação Wokwi
 ├── scripts/
-│   └── generate_vapid_keys.py  # Gera par de chaves VAPID para o Web Push
-└── LICENSE                     # Apache License 2.0
+│   └── generate_vapid_keys.py # Gera par de chaves VAPID para o Web Push
+├── docker-compose.yml         # Orquestra db (Postgres) + broker (Mosquitto) + web (API)
+├── docker-compose.override.yml  # Overrides para desenvolvimento local
+├── docker-compose.prod.yml    # Configuração para produção
+├── setup-dev.sh               # Script de setup do ambiente de desenvolvimento
+└── LICENSE                    # Apache License 2.0
 ```
 
 ---
